@@ -7,4 +7,4 @@ Weld is a parallel data oriented Entity-component-system for the Magma3D engine.
 - [ ] easily implement systems
 ## How it works
 ## How to use it
-### Credits
+## Credits
