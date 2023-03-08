@@ -1,28 +1,21 @@
-trait ComponentVec {
-    fn push_none(&mut self);
-}
-
-impl<T: 'static> ComponentVec for Vec<Option<T>>  {
-    fn push_none(&mut self) {
-        self.push(None);
-    }
-}
-struct Scene {
+struct World {
     entities: u32,
-    components: Vec<Box<dyn ComponentVec>>,
+    components: Vec<Vec<u32>>,
 }
 
-impl Scene {
+impl World {
     pub fn new() -> Self {
-        Self { entities: 0, components: Vec::new() }
+        Self { entities: 0, components: Vec::new }
     }
 
-    pub fn entity(&mut self) -> u32 {
+    pub fn add_entity(&mut self) -> u32 {
         let entity_id = self.entities;
-        for component in self.components.iter_mut() {
-            component.push_none();
+        
+        for component in self.components {
+            component.push(0);
         }
+
         self.entities += 1;
-        entity_id
+        self.entities
     }
 }
