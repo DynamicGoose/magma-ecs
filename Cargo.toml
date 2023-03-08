@@ -1,5 +1,5 @@
 [package]
-name = "Weld"
+name = "weld"
 version = "0.1.0"
 edition = "2021"
 
