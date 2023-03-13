@@ -1,5 +1,5 @@
-# Weld
-Weld is a parallel data oriented Entity-component-system for the Magma3D engine.
+# Mecs
+M(agma)-ecs is a parallel data oriented Entity-component-system for the Magma3D engine.
 ## Features
 - [ ] parallel
 - [ ] adding and deleting entities
