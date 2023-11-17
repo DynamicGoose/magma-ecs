@@ -1,4 +1,4 @@
-# MECS
+# Mecs
 M(agma)-ecs is a parallel data oriented Entity-component-system for the Magma3D engine.
 ## Features
 - Simple and fast
