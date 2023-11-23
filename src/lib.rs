@@ -1,12 +1,13 @@
 use std::any::Any;
 
-use resource::Resource;
+use resource::Resources;
 
 mod resource;
 
+/// The `World` struct holds all the data of our world.
 #[derive(Default)]
 pub struct World {
-	resources: Resource,
+	resources: Resources,
 }
 
 impl World {
@@ -14,10 +15,12 @@ impl World {
 		Self::default()
 	}
 
+	/// This adds a resource, which can be of any type that implements the `std::any::Any` trait.
 	pub fn add_resource(&mut self, resource_data: impl Any) {
 		self.resources.add(resource_data);
 	}
 
+	/// Get an immutable reference to a resource.
 	pub fn get_resource<T: Any>(&self) -> Option<&T> {
 		self.resources.get_ref::<T>()
 	}

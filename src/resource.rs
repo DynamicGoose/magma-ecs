@@ -2,11 +2,11 @@ use std::{any::{Any, TypeId}, collections::HashMap};
 
 // TODO: change to Resources
 #[derive(Default)]
-pub struct Resource {
+pub struct Resources {
 	data: HashMap<TypeId, Box<dyn Any>>,
 }
 
-impl Resource {
+impl Resources {
 	pub fn add(&mut self, data: impl Any) {
 		self.data.insert(data.type_id(), Box::new(data));
 	}
@@ -75,8 +75,8 @@ mod test {
 		assert!(!resources.data.contains_key(&time_type_id))
 	}
 
-	fn init_resource() -> Resource {
-		let mut resources = Resource::default();
+	fn init_resource() -> Resources {
+		let mut resources = Resources::default();
 		let time = Time(20);
 
 		resources.add(time);
