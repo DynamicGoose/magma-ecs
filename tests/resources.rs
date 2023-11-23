@@ -19,6 +19,14 @@ fn get_resource_mut() {
 	assert_eq!(fps.0, 61.0);
 }
 
+#[test]
+fn remove_resource() {
+	let mut world = init_world();
+	world.remove_resource::<FpsResource>();
+	let deleted_resource = world.get_resource::<FpsResource>();
+	assert!(deleted_resource.is_none());
+}
+
 fn init_world() -> World {
 	let mut world = World::new();
 	world.add_resource(FpsResource(60.0));

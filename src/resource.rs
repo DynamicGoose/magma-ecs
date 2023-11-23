@@ -28,6 +28,11 @@ impl Resource {
 			None
 		}
 	}
+
+	pub fn remove<T: Any>(&mut self) {
+		let type_id = TypeId::of::<T>();
+		self.data.remove(&type_id);
+	}
 }
 
 #[cfg(test)]
@@ -60,6 +65,14 @@ mod test {
 		}
 		let time = resources.get_ref::<Time>().unwrap();
 		assert_eq!(time.0, 21);
+	}
+
+	#[test]
+	fn remove_resource() {
+		let mut resources = init_resource();
+		resources.remove::<Time>();
+		let time_type_id = TypeId::of::<Time>();
+		assert!(!resources.data.contains_key(&time_type_id))
 	}
 
 	fn init_resource() -> Resource {
