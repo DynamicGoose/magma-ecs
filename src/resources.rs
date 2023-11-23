@@ -1,6 +1,5 @@
 use std::{any::{Any, TypeId}, collections::HashMap};
 
-// TODO: change to Resources
 #[derive(Default)]
 pub struct Resources {
 	data: HashMap<TypeId, Box<dyn Any>>,

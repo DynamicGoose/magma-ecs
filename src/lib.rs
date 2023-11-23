@@ -1,8 +1,9 @@
 use std::any::Any;
 
-use resource::Resources;
+use resources::Resources;
 
-mod resource;
+mod resources;
+mod entities;
 
 /// The `World` struct holds all the data of our world.
 #[derive(Default)]
