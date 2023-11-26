@@ -12,6 +12,7 @@ use crate::internal_errors::EntityErrors;
 // TODO: Implement better API
 #[derive(Debug, Default)]
 pub struct Entities {
+    // TODO: type definition
     components: HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>,
     // this is limited to 32 components
     // TODO: Increase bitmask size
