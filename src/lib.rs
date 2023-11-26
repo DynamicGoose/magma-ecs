@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use entities::Entities;
+use entities::{Entities, query::Query};
 use resources::Resources;
 
 pub mod errors;
@@ -60,9 +60,12 @@ impl World {
         self.entities.register_component::<T>();
     }
 
-    // TODO: Take components as parameters?
     pub fn spawn(&mut self) -> &mut Entities {
-        self.entities.new_entity()
+        self.entities.add_entity()
+    }
+
+    pub fn query(&self) -> Query {
+        Query::new()
     }
 }
 

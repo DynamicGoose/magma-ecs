@@ -1,3 +1,5 @@
+pub mod query;
+
 use std::{
     any::{Any, TypeId},
     cell::RefCell,
@@ -18,7 +20,7 @@ impl Entities {
         self.components.insert(TypeId::of::<T>(), vec![]);
     }
 
-    pub fn new_entity(&mut self) -> &mut Self {
+    pub fn add_entity(&mut self) -> &mut Self {
         self.components
             .iter_mut()
             .for_each(|(_key, components)| components.push(None));
@@ -28,7 +30,6 @@ impl Entities {
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, EntityErrors> {
         let type_id = data.type_id();
         if let Some(components) = self.components.get_mut(&type_id) {
-            // TODO: implement error handling
             let last_component = components
                 .last_mut()
                 .ok_or(EntityErrors::ComponentNeverRegistered)?;
@@ -60,7 +61,7 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities.new_entity();
+        entities.add_entity();
 
         let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
         let speed = entities.components.get(&TypeId::of::<Speed>()).unwrap();
@@ -79,7 +80,7 @@ mod test {
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities
-            .new_entity()
+            .add_entity()
             .with_component(Health(100))
             .unwrap()
             .with_component(Speed(15))
