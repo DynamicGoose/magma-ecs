@@ -56,12 +56,13 @@ impl World {
     }
 
     // TODO: combine register_component and with_component
+    /// There is currently a limit of 32 components per `World`. This will be improved in the future.
     pub fn register_component<T: Any>(&mut self) {
         self.entities.register_component::<T>();
     }
 
     pub fn spawn(&mut self) -> &mut Entities {
-        self.entities.add_entity()
+        self.entities.create_entity()
     }
 
     pub fn query(&self) -> Query {
