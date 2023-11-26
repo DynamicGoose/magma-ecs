@@ -23,7 +23,8 @@ impl Entities {
     pub fn register_component<T: Any>(&mut self) {
         let type_id = TypeId::of::<T>();
         self.components.insert(type_id, vec![]);
-        self.bit_masks.insert(type_id, 2_u32.pow(self.bit_masks.len() as u32));
+        self.bit_masks
+            .insert(type_id, 2_u32.pow(self.bit_masks.len() as u32));
     }
 
     pub fn create_entity(&mut self) -> &mut Self {
@@ -40,15 +41,19 @@ impl Entities {
         if let Some(components) = self.components.get_mut(&type_id) {
             let last_component = components
                 .last_mut()
-                .ok_or(EntityErrors::ComponentNeverRegistered)?;
+                .ok_or(EntityErrors::ComponentNotRegistered)?;
             *last_component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
             self.map[map_index] |= *bit_mask;
         } else {
-            return Err(EntityErrors::ComponentNotRegistered.into());
+            return Err(EntityErrors::ComponentNotRegistered);
         }
         Ok(self)
+    }
+
+    pub fn get_bitmask(&self, type_id: &TypeId) -> Option<u32> {
+        self.bit_masks.get(type_id).copied()
     }
 }
 

@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use entities::{Entities, query::Query};
+use entities::{query::Query, Entities};
 use resources::Resources;
 
 pub mod errors;
@@ -66,7 +66,7 @@ impl World {
     }
 
     pub fn query(&self) -> Query {
-        Query::new()
+        Query::new(&self.entities)
     }
 }
 
