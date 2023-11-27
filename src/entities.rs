@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::internal_errors::EntityErrors;
+use crate::errors::EntityErrors;
 
 // TODO: Implement better API
 #[derive(Debug, Default)]
@@ -55,6 +55,21 @@ impl Entities {
 
     pub fn get_bitmask(&self, type_id: &TypeId) -> Option<u32> {
         self.bit_masks.get(type_id).copied()
+    }
+
+    pub fn delete_component_by_entity_id<T: Any>(
+        &mut self,
+        index: usize,
+    ) -> Result<(), EntityErrors> {
+        let type_id = TypeId::of::<T>();
+        let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
+            mask
+        } else {
+            return Err(EntityErrors::ComponentNotRegistered);
+        };
+
+        self.map[index] ^= *mask;
+        Ok(())
     }
 }
 
@@ -139,6 +154,24 @@ mod test {
 
         let entity_map = entities.map[1];
         assert_eq!(entity_map, 1);
+    }
+
+    #[test]
+    fn remove_component_by_entity_id() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+
+        entities
+            .create_entity()
+            .with_component(Health(10))
+            .unwrap()
+            .with_component(Speed(50))
+            .unwrap();
+
+        entities.delete_component_by_entity_id::<Health>(0).unwrap();
+
+        assert_eq!(entities.map[0], 2);
     }
 
     struct Health(u32);

@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::internal_errors::EntityErrors;
+use crate::errors::EntityErrors;
 
 use super::Entities;
 
@@ -13,6 +13,11 @@ pub struct Query<'a> {
     map: u32,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
+}
+
+pub struct QueryResult {
+    pub indexes: Vec<usize>,
+    pub components: Vec<Vec<Rc<RefCell<dyn Any>>>>,
 }
 
 impl<'a> Query<'a> {
@@ -35,7 +40,7 @@ impl<'a> Query<'a> {
         Ok(self)
     }
 
-    pub fn run(&self) -> Vec<Vec<Rc<RefCell<dyn Any>>>> {
+    pub fn run(&self) -> QueryResult {
         let indexes: Vec<usize> = self
             .entities
             .map
@@ -50,7 +55,7 @@ impl<'a> Query<'a> {
             })
             .collect();
 
-        let mut result = vec![];
+        let mut components = vec![];
 
         for type_id in &self.type_ids {
             let entity_components = self.entities.components.get(type_id).unwrap();
@@ -58,10 +63,13 @@ impl<'a> Query<'a> {
             for index in &indexes {
                 components_to_keep.push(entity_components[*index].clone().unwrap());
             }
-            result.push(components_to_keep)
+            components.push(components_to_keep)
         }
 
-        result
+        QueryResult {
+            indexes,
+            components,
+        }
     }
 }
 
@@ -116,11 +124,19 @@ mod test {
             .unwrap();
 
         let query_result = query.run();
-        let u32s = &query_result[0];
-        let f32s = &query_result[1];
+        let u32s = &query_result.components[0];
+        let f32s = &query_result.components[1];
+        let indexes = &query_result.indexes;
 
         let first_u32 = *u32s[0].borrow().downcast_ref::<u32>().unwrap();
 
-        assert!(u32s.len() == f32s.len() && u32s.len() == 2 && first_u32 == 10);
+        assert!(
+            u32s.len() == f32s.len()
+                && u32s.len() == 2
+                && first_u32 == 10
+                && u32s.len() == indexes.len()
+                && indexes[0] == 0
+                && indexes[1] == 3
+        );
     }
 }

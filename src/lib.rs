@@ -1,12 +1,12 @@
 use std::any::Any;
 
 use entities::{query::Query, Entities};
+use errors::EntityErrors;
 use resources::Resources;
 
 pub mod errors;
 
 mod entities;
-mod internal_errors;
 mod resources;
 
 /// The `World` struct holds all the data of our world.
@@ -67,6 +67,10 @@ impl World {
 
     pub fn query(&self) -> Query {
         Query::new(&self.entities)
+    }
+
+    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityErrors> {
+        self.entities.delete_component_by_entity_id::<T>(index)
     }
 }
 
