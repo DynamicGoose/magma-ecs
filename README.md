@@ -1,12 +1,11 @@
 # Mecs
 M(agma)-ecs is the Entity-component-system for the Magma3D engine.
 ## Features
-- Simple and fast
-	- Mecs tries to keep things simple but is still fast thanks to automatic parallelization
-- Modules
-	- Modules can add further functionality to the engine
-- Parallel
-	All code is automatically parallelized
+- [x] Simple and Lightweight
+- [ ] Modules
+	> Modules can add further functionality to the engine
+- [ ] Parallel
+	> All code is automatically parallelized
 
 ## Disclaimer
 
