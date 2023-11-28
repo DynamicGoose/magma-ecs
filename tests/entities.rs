@@ -82,5 +82,25 @@ fn delete_component_from_entity() {
     assert!(query.indexes.len() == 1 && query.indexes[0] == 1);
 }
 
+#[test]
+fn add_component_to_entity() {
+    let mut world = World::new();
+    world.register_component::<Location>();
+    world.register_component::<Size>();
+    world.spawn().with_component(Location(10.0, 15.0)).unwrap();
+
+    world.add_component(Size(20.0), 0).unwrap();
+
+    let query = world
+        .query()
+        .with_component::<Location>()
+        .unwrap()
+        .with_component::<Size>()
+        .unwrap()
+        .run();
+
+    assert_eq!(query.indexes.len(), 1);
+}
+
 struct Location(pub f32, pub f32);
 struct Size(pub f32);

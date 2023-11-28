@@ -57,7 +57,7 @@ impl Entities {
         self.bit_masks.get(type_id).copied()
     }
 
-    pub fn delete_component_by_entity_id<T: Any>(
+    pub fn remove_component_by_entity_id<T: Any>(
         &mut self,
         index: usize,
     ) -> Result<(), EntityErrors> {
@@ -69,6 +69,24 @@ impl Entities {
         };
 
         self.map[index] ^= *mask;
+        Ok(())
+    }
+
+    pub fn add_component_by_entity_id(
+        &mut self,
+        data: impl Any,
+        index: usize,
+    ) -> Result<(), EntityErrors> {
+        let type_id = data.type_id();
+        let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
+            mask
+        } else {
+            return Err(EntityErrors::ComponentNotRegistered);
+        };
+        self.map[index] |= *mask;
+
+        let components = self.components.get_mut(&type_id).unwrap();
+        components[index] = Some(Rc::new(RefCell::new(data)));
         Ok(())
     }
 }
@@ -169,9 +187,32 @@ mod test {
             .with_component(Speed(50))
             .unwrap();
 
-        entities.delete_component_by_entity_id::<Health>(0).unwrap();
+        entities.remove_component_by_entity_id::<Health>(0).unwrap();
 
         assert_eq!(entities.map[0], 2);
+    }
+
+    #[test]
+    fn add_component_by_entity_id() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+
+        entities.add_component_by_entity_id(Speed(50), 0).unwrap();
+
+        assert_eq!(entities.map[0], 3);
+
+        let speed_type_id = TypeId::of::<Speed>();
+        let wrapped_speeds = entities.components.get(&speed_type_id).unwrap();
+        let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
+        let borrowed_speed = wrapped_speed.borrow();
+        let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
+
+        assert!(entities.map[0] == 3 && speed.0 == 50);
     }
 
     struct Health(u32);

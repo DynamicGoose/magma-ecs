@@ -70,9 +70,15 @@ impl World {
         Query::new(&self.entities)
     }
 
+    // refactor to work on entity and not on world
     /// Remove a component from an entity
     pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityErrors> {
-        self.entities.delete_component_by_entity_id::<T>(index)
+        self.entities.remove_component_by_entity_id::<T>(index)
+    }
+
+    // refactor to work on entity and not on world
+    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityErrors> {
+        self.entities.add_component_by_entity_id(data, index)
     }
 }
 
