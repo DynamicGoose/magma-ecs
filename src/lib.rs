@@ -65,10 +65,12 @@ impl World {
         self.entities.create_entity()
     }
 
+    /// Query for entities with specified components
     pub fn query(&self) -> Query {
         Query::new(&self.entities)
     }
 
+    /// Remove a component from an entity
     pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityErrors> {
         self.entities.delete_component_by_entity_id::<T>(index)
     }
