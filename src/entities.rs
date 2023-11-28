@@ -89,6 +89,15 @@ impl Entities {
         components[index] = Some(Rc::new(RefCell::new(data)));
         Ok(())
     }
+
+    pub fn delete_entity_by_id(&mut self, index: usize) -> Result<(), EntityErrors> {
+        if let Some(map) = self.map.get_mut(index) {
+            *map = 0;
+        } else {
+            return Err(EntityErrors::EntityDoesNotExist);
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -117,7 +126,7 @@ mod test {
     }
 
     #[test]
-    fn add_entity() {
+    fn create_entity() {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
@@ -213,6 +222,19 @@ mod test {
         let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
 
         assert!(entities.map[0] == 3 && speed.0 == 50);
+    }
+
+    #[test]
+    fn delete_entity_by_id() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+        entities.delete_entity_by_id(0).unwrap();
+
+        assert_eq!(entities.map[0], 0);
     }
 
     struct Health(u32);

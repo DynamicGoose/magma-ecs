@@ -80,6 +80,10 @@ impl World {
     pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityErrors> {
         self.entities.add_component_by_entity_id(data, index)
     }
+
+    pub fn despawn(&mut self, index: usize) -> Result<(), EntityErrors> {
+        self.entities.delete_entity_by_id(index)
+    }
 }
 
 #[cfg(test)]

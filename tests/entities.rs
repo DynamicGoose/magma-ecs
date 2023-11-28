@@ -102,5 +102,31 @@ fn add_component_to_entity() {
     assert_eq!(query.indexes.len(), 1);
 }
 
+#[test]
+fn delete_entity() {
+    let mut world = World::new();
+    world.register_component::<Location>();
+    world.register_component::<Size>();
+    world.spawn().with_component(Location(10.0, 15.0)).unwrap();
+    world.spawn().with_component(Location(20.0, 25.0)).unwrap();
+
+    world.despawn(0).unwrap();
+
+    let query = world.query().with_component::<Location>().unwrap().run();
+
+    let borrowed_location = query.components[0][0].borrow();
+    let location = borrowed_location.downcast_ref::<Location>().unwrap();
+
+    assert!(query.indexes.len() == 1 && location.0 == 20.0);
+
+    // TODO: implemet reusing deleted entities
+    world.spawn().with_component(Location(30.0, 35.0)).unwrap();
+    let query = world.query().with_component::<Location>().unwrap().run();
+    let borrowed_location = query.components[0][0].borrow();
+    let location = borrowed_location.downcast_ref::<Location>().unwrap();
+
+    assert_eq!(location.0, 30.0);
+}
+
 struct Location(pub f32, pub f32);
 struct Size(pub f32);
