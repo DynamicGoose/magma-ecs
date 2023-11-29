@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use entities::{query::Query, Entities};
-use errors::EntityErrors;
+use errors::MecsErrors;
 use resources::Resources;
 
 pub mod errors;
@@ -72,16 +72,16 @@ impl World {
 
     // refactor to work on entity and not on world
     /// Remove a component from an entity
-    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityErrors> {
+    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), MecsErrors> {
         self.entities.remove_component_by_entity_id::<T>(index)
     }
 
     // refactor to work on entity and not on world
-    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityErrors> {
+    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), MecsErrors> {
         self.entities.add_component_by_entity_id(data, index)
     }
 
-    pub fn despawn(&mut self, index: usize) -> Result<(), EntityErrors> {
+    pub fn despawn(&mut self, index: usize) -> Result<(), MecsErrors> {
         self.entities.delete_entity_by_id(index)
     }
 }

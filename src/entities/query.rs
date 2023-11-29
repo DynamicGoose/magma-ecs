@@ -4,13 +4,13 @@ use std::{
     rc::Rc,
 };
 
-use crate::errors::EntityErrors;
+use crate::errors::MecsErrors;
 
 use super::Entities;
 
 #[derive(Debug)]
 pub struct Query<'a> {
-    map: u32,
+    map: u128,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
 }
@@ -29,13 +29,13 @@ impl<'a> Query<'a> {
         }
     }
 
-    pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, EntityErrors> {
+    pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, MecsErrors> {
         let type_id = TypeId::of::<T>();
         if let Some(bit_mask) = self.entities.get_bitmask(&type_id) {
             self.map |= bit_mask;
             self.type_ids.push(type_id);
         } else {
-            return Err(EntityErrors::ComponentNotRegistered);
+            return Err(MecsErrors::ComponentNotRegistered);
         }
         Ok(self)
     }

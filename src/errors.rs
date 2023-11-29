@@ -1,8 +1,7 @@
 use thiserror::Error;
 
-//TODO: make private, once implementation is finished
 #[derive(Debug, Error)]
-pub enum EntityErrors {
+pub enum MecsErrors {
     #[error("Attempted to access unregistered component")]
     ComponentNotRegistered,
     #[error("Attempted to access entity, that doesn't exist")]
