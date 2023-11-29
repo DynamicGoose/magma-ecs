@@ -1,12 +1,8 @@
-use std::{
-    any::{Any, TypeId},
-    cell::RefCell,
-    rc::Rc,
-};
+use std::any::{Any, TypeId};
 
 use crate::errors::MecsErrors;
 
-use super::Entities;
+use super::{Component, Entities};
 
 #[derive(Debug)]
 pub struct Query<'a> {
@@ -17,7 +13,7 @@ pub struct Query<'a> {
 
 pub struct QueryResult {
     pub indexes: Vec<usize>,
-    pub components: Vec<Vec<Rc<RefCell<dyn Any>>>>,
+    pub components: Vec<Vec<Component>>,
 }
 
 impl<'a> Query<'a> {
@@ -125,10 +121,14 @@ mod test {
 
         let query_result = query.run();
         let u32s = &query_result.components[0];
+        dbg!(u32s);
         let f32s = &query_result.components[1];
+        dbg!(f32s);
         let indexes = &query_result.indexes;
+        dbg!(indexes);
 
         let first_u32 = *u32s[0].borrow().downcast_ref::<u32>().unwrap();
+        dbg!(first_u32);
 
         assert!(
             u32s.len() == f32s.len()

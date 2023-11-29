@@ -119,7 +119,6 @@ fn delete_entity() {
 
     assert!(query.indexes.len() == 1 && location.0 == 20.0);
 
-    // TODO: implemet reusing deleted entities
     world.spawn().with_component(Location(30.0, 35.0)).unwrap();
     let query = world.query().with_component::<Location>().unwrap().run();
     let borrowed_location = query.components[0][0].borrow();

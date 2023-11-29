@@ -9,7 +9,8 @@ use std::{
 
 use crate::errors::MecsErrors;
 
-type ComponentMap = HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>;
+pub type Component = Rc<RefCell<dyn Any>>;
+pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
 
 // TODO: Implement better API
 #[derive(Debug, Default)]
@@ -18,6 +19,7 @@ pub struct Entities {
     // TODO (0.2.0): Increase bitmask size (bitmaps crate?)
     bit_masks: HashMap<TypeId, u128>,
     map: Vec<u128>,
+    into_index: usize,
 }
 
 impl Entities {
@@ -29,24 +31,30 @@ impl Entities {
     }
 
     pub fn create_entity(&mut self) -> &mut Self {
-        self.components
-            .iter_mut()
-            .for_each(|(_key, components)| components.push(None));
-        self.map.push(0);
+        if let Some((index, _)) = self.map.iter().enumerate().find(|(_, mask)| **mask == 0) {
+            self.into_index = index;
+        } else {
+            self.components
+                .iter_mut()
+                .for_each(|(_key, components)| components.push(None));
+            self.map.push(0);
+            self.into_index = self.map.len() - 1;
+        }
+
         self
     }
 
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, MecsErrors> {
         let type_id = data.type_id();
-        let map_index = self.map.len() - 1;
+        let index = self.into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
-            let last_component = components
-                .last_mut()
+            let component = components
+                .get_mut(index)
                 .ok_or(MecsErrors::ComponentNotRegistered)?;
-            *last_component = Some(Rc::new(RefCell::new(data)));
+            *component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
-            self.map[map_index] |= *bit_mask;
+            self.map[index] |= *bit_mask;
         } else {
             return Err(MecsErrors::ComponentNotRegistered);
         }
@@ -235,6 +243,28 @@ mod test {
         entities.delete_entity_by_id(0).unwrap();
 
         assert_eq!(entities.map[0], 0);
+    }
+
+    #[test]
+    fn reuse_deleted_entity_columns() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+        entities.create_entity().with_component(Health(50)).unwrap();
+        entities.delete_entity_by_id(0).unwrap();
+        entities.create_entity().with_component(Health(25)).unwrap();
+
+        let type_id = TypeId::of::<Health>();
+        let borrowed_health = entities.components.get(&type_id).unwrap()[0]
+            .as_ref()
+            .unwrap()
+            .borrow();
+        let health = borrowed_health.downcast_ref::<Health>().unwrap();
+
+        assert!(entities.map[0] == 1 && health.0 == 25);
     }
 
     struct Health(u32);

@@ -1,7 +1,9 @@
 [package]
 name = "mecs"
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2021"
+description = "Entity-Component-System for the Magma3D game engine"
+license = "MIT"
 
 [dependencies]
 thiserror = "1.0.50"
