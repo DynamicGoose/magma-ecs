@@ -2,8 +2,8 @@
 M(agma)-ecs is the Entity-component-system for the Magma3D engine.
 ## Features
 - [x] Simple and Lightweight
-- [ ] Modules
-	> Modules can add further functionality to the engine
+- [ ] Update and Startup funktions for systems
+	> Allow for easy execution of the systems
 - [ ] Parallel
 	> All code is automatically parallelized
 
