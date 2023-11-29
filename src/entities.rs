@@ -9,11 +9,12 @@ use std::{
 
 use crate::errors::EntityErrors;
 
+type ComponentMap = HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>;
+
 // TODO: Implement better API
 #[derive(Debug, Default)]
 pub struct Entities {
-    // TODO: type definition
-    components: HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>,
+    components: ComponentMap,
     // this is limited to 32 components
     // TODO: Increase bitmask size
     bit_masks: HashMap<TypeId, u32>,
