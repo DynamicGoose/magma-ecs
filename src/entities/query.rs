@@ -2,18 +2,13 @@ use std::any::{Any, TypeId};
 
 use crate::errors::MecsErrors;
 
-use super::{Component, Entities};
+use super::{query_result::QueryResult, Entities};
 
 #[derive(Debug)]
 pub struct Query<'a> {
     map: u128,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
-}
-
-pub struct QueryResult {
-    pub indexes: Vec<usize>,
-    pub components: Vec<Vec<Component>>,
 }
 
 impl<'a> Query<'a> {
