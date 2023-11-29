@@ -1,5 +1,5 @@
 pub mod query;
-pub mod query_result;
+pub mod query_entity;
 
 use std::{
     any::{Any, TypeId},
@@ -27,8 +27,7 @@ impl Entities {
     pub fn register_component<T: Any>(&mut self) {
         let type_id = TypeId::of::<T>();
         self.components.insert(type_id, vec![]);
-        self.bit_masks
-            .insert(type_id, 2_u128.pow(self.bit_masks.len() as u32));
+        self.bit_masks.insert(type_id, 1 << self.bit_masks.len());
     }
 
     pub fn create_entity(&mut self) -> &mut Self {
@@ -77,7 +76,9 @@ impl Entities {
             return Err(MecsErrors::ComponentNotRegistered);
         };
 
-        self.map[index] ^= *mask;
+        if self.map[index] & *mask == *mask {
+            self.map[index] ^= *mask;
+        }
         Ok(())
     }
 
