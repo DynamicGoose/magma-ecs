@@ -15,8 +15,7 @@ type ComponentMap = HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>;
 #[derive(Debug, Default)]
 pub struct Entities {
     components: ComponentMap,
-    // this is limited to 128 components
-    // TODO: Increase bitmask size
+    // TODO (0.2.0): Increase bitmask size (bitmaps crate?)
     bit_masks: HashMap<TypeId, u128>,
     map: Vec<u128>,
 }
