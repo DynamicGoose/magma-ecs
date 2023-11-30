@@ -1,5 +1,6 @@
 # Mecs
 M(agma)-ecs is the Entity-component-system for the Magma3D engine.
+
 ## Features
 - [x] Simple and Lightweight
 - [x] Update and Startup funktions for systems
@@ -9,4 +10,4 @@ M(agma)-ecs is the Entity-component-system for the Magma3D engine.
 
 ## Disclaimer
 
-Developement has just been started! Please be patient for the first alpha, that should ship in january of 2024.
+This is still in developement and *not* production ready.
