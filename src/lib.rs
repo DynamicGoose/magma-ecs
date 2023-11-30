@@ -84,6 +84,35 @@ impl World {
     pub fn despawn(&mut self, index: usize) -> Result<(), MecsErrors> {
         self.entities.delete_entity_by_id(index)
     }
+
+    pub fn startup(
+        &mut self,
+        systems_ref: Vec<&dyn Fn(&Self)>,
+        systems_mut: Vec<&dyn Fn(&mut Self)>,
+    ) {
+        for system in systems_ref {
+            system(self);
+        }
+        for system in systems_mut {
+            system(self);
+        }
+    }
+
+    pub fn update(
+        &mut self,
+        update_condition: &dyn Fn(&Self) -> bool,
+        systems_ref: Vec<&dyn Fn(&Self)>,
+        systems_mut: Vec<&dyn Fn(&mut Self)>,
+    ) {
+        while update_condition(self) {
+            for system in &systems_ref {
+                system(self);
+            }
+            for system in &systems_mut {
+                system(self);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
