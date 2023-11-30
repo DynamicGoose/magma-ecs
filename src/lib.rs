@@ -25,7 +25,7 @@ impl World {
     /**
     This adds a resource, which can be of any type that implements the `std::any::Any` trait.
     ```
-    use mecs::World;
+    use magma_ecs::World;
 
     let mut world = World::new();
     world.add_resource(10_u32);
@@ -38,7 +38,7 @@ impl World {
     /**
     Get an immutable reference to a resource.
     ```
-    use mecs::World;
+    use magma_ecs::World;
 
     let mut world = World::new();
     world.add_resource(10_u32);
@@ -53,7 +53,7 @@ impl World {
     /**
     Get a mutable reference to a resource. The type of the resource must be added using turbofish notation.
     ```
-    use mecs::World;
+    use magma_ecs::World;
 
     let mut world = World::new();
     world.add_resource(10_u32);
@@ -86,7 +86,7 @@ impl World {
 
     /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
     /// ```
-    /// use mecs::World;
+    /// use magma_ecs::World;
     ///
     /// let mut world = World::new();
     /// world.register_component::<u32>();

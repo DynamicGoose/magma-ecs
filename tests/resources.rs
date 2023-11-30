@@ -1,4 +1,4 @@
-use mecs::World;
+use magma_ecs::World;
 
 #[test]
 fn create_and_get_resource_immut() {

@@ -1,6 +1,6 @@
 use std::{any::Any, cell::RefCell, rc::Rc};
 
-use mecs::World;
+use magma_ecs::World;
 
 #[test]
 fn create_entity() {

@@ -46,7 +46,7 @@ impl Entities {
     /**
     Add component to an entity on creation. The component has to be registered first for this to work.
     ```
-    use mecs::World;
+    use magma_ecs::World;
 
     let mut world = World::new();
     world.register_component::<u32>();
