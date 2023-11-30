@@ -10,6 +10,7 @@ use super::Entities;
 
 type ExtractedComponents<'a> = Result<&'a Vec<Option<Rc<RefCell<dyn Any>>>>, MecsErrors>;
 
+/// A query entity with the entities id and a reference to the `Entities` struct.
 pub struct QueryEntity<'a> {
     pub id: usize,
     entities: &'a Entities,

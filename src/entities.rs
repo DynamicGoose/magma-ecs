@@ -13,7 +13,6 @@ use crate::errors::MecsErrors;
 pub type Component = Rc<RefCell<dyn Any>>;
 pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
 
-// TODO: Implement better API
 #[derive(Debug, Default)]
 pub struct Entities {
     components: ComponentMap,
@@ -44,6 +43,16 @@ impl Entities {
         self
     }
 
+    /**
+    Add component to an entity on creation. The component has to be registered first for this to work.
+    ```
+    use mecs::World;
+
+    let mut world = World::new();
+    world.register_component::<u32>();
+    world.spawn().with_component(32_u32).unwrap();
+    ```
+    */
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, MecsErrors> {
         let type_id = data.type_id();
         let index = self.into_index;

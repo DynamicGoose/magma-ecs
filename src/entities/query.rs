@@ -11,6 +11,7 @@ pub struct Query<'a> {
     type_ids: Vec<TypeId>,
 }
 
+/// Result of a `Query` with indexes of the found entites and the queried component vecs.
 pub struct QueryResult {
     pub indexes: Vec<usize>,
     pub components: Vec<Vec<Component>>,
