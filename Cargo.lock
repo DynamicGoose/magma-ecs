@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "magma_ecs"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha.1"
 dependencies = [
  "thiserror",
 ]
