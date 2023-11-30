@@ -1,5 +1,5 @@
-# Mecs
-M(agma)-ecs is the Entity-component-system for the Magma3D engine.
+# Magma-ECS
+Magma-ECS is the Entity-component-system for the Magma3D engine.
 
 ## Features
 - [x] Simple and Lightweight
