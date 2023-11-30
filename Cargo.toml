@@ -2,8 +2,9 @@
 name = "mecs"
 version = "0.1.0-alpha"
 edition = "2021"
-description = "Entity-Component-System for the Magma3D game engine"
 license = "MIT"
+description = "Entity-Component-System for the Magma3D game engine"
+repository = "https://github.com/DynamicGoose/mecs"
 
 [dependencies]
 thiserror = "1.0.50"
