@@ -127,7 +127,7 @@ impl World {
     This takes a `Vec` of references to functions that take a reference to `World` as well as a `Vec` of references to functions that take a mutable reference to `World`.
     It runs all of the supplied functions once on the `World`.
     */
-    pub fn startup(
+    pub fn update(
         &mut self,
         systems_ref: Vec<&dyn Fn(&Self)>,
         systems_mut: Vec<&dyn Fn(&mut Self)>,
@@ -137,27 +137,6 @@ impl World {
         }
         for system in systems_mut {
             system(self);
-        }
-    }
-
-    /**
-    This takes a `Vec` of references to functions that take a reference to `World` as well as a `Vec` of references to functions that take a mutable reference to `World`.
-    It runs all of the supplied functions once on each update.
-    It also takes an update condition, which must return `true` for the update loop to run.
-    */
-    pub fn update(
-        &mut self,
-        update_condition: &dyn Fn(&Self) -> bool,
-        systems_ref: Vec<&dyn Fn(&Self)>,
-        systems_mut: Vec<&dyn Fn(&mut Self)>,
-    ) {
-        while update_condition(self) {
-            for system in &systems_ref {
-                system(self);
-            }
-            for system in &systems_mut {
-                system(self);
-            }
         }
     }
 }
