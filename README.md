@@ -3,7 +3,7 @@ Magma-ECS is the Entity-component-system for the Magma3D engine.
 
 ## Features
 - [x] Simple and Lightweight
-- [x] Update and Startup funktions for systems
+- [x] Updatefunktion for systems
 	> Allow for easy execution of the systems
 - [ ] Parallel
 	> All code is automatically parallelized
