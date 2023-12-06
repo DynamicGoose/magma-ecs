@@ -1,7 +1,7 @@
 with import <nixpkgs> {};
 
 stdenv.mkDerivation rec {
-  name = "slint-env";
+  name = "magma_ecs";
   buildInputs = [
     
   ];
