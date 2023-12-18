@@ -1,6 +1,6 @@
 use std::any::{Any, TypeId};
 
-use crate::errors::MecsErrors;
+use crate::error::EntityError;
 
 use super::{query_entity::QueryEntity, Component, Entities};
 
@@ -26,13 +26,13 @@ impl<'a> Query<'a> {
         }
     }
 
-    pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, MecsErrors> {
+    pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, EntityError> {
         let type_id = TypeId::of::<T>();
         if let Some(bit_mask) = self.entities.get_bitmask(&type_id) {
             self.map |= bit_mask;
             self.type_ids.push(type_id);
         } else {
-            return Err(MecsErrors::ComponentNotRegistered);
+            return Err(EntityError::ComponentNotRegistered);
         }
         Ok(self)
     }

@@ -4,11 +4,11 @@ use std::{
     rc::Rc,
 };
 
-use crate::errors::MecsErrors;
+use crate::error::EntityError;
 
 use super::Entities;
 
-type ExtractedComponents<'a> = Result<&'a Vec<Option<Rc<RefCell<dyn Any>>>>, MecsErrors>;
+type ExtractedComponents<'a> = Result<&'a Vec<Option<Rc<RefCell<dyn Any>>>>, EntityError>;
 
 /// A query entity with the entities id and a reference to the `Entities` struct.
 pub struct QueryEntity<'a> {
@@ -26,24 +26,24 @@ impl<'a> QueryEntity<'a> {
         self.entities
             .components
             .get(&type_id)
-            .ok_or(MecsErrors::ComponentNotInQuery)
+            .ok_or(EntityError::ComponentNotInQuery)
     }
-    pub fn get_component<T: Any>(&self) -> Result<Ref<T>, MecsErrors> {
+    pub fn get_component<T: Any>(&self) -> Result<Ref<T>, EntityError> {
         let components = self.extract_components::<T>()?;
         let borrowed_component = components[self.id]
             .as_ref()
-            .ok_or(MecsErrors::ComponentDataDoesNotExist)?
+            .ok_or(EntityError::ComponentDataDoesNotExist)?
             .borrow();
         Ok(Ref::map(borrowed_component, |any| {
             any.downcast_ref::<T>().unwrap()
         }))
     }
 
-    pub fn get_component_mut<T: Any>(&self) -> Result<RefMut<T>, MecsErrors> {
+    pub fn get_component_mut<T: Any>(&self) -> Result<RefMut<T>, EntityError> {
         let components = self.extract_components::<T>()?;
         let borrowed_component = components[self.id]
             .as_ref()
-            .ok_or(MecsErrors::ComponentDataDoesNotExist)?
+            .ok_or(EntityError::ComponentDataDoesNotExist)?
             .borrow_mut();
         Ok(RefMut::map(borrowed_component, |any| {
             any.downcast_mut::<T>().unwrap()

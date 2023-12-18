@@ -1,11 +1,11 @@
 use std::any::Any;
 
 use entities::{query::Query, Entities};
-use errors::MecsErrors;
+use error::EntityError;
 use resources::Resources;
 
 pub mod entities;
-pub mod errors;
+pub mod error;
 
 mod resources;
 
@@ -109,17 +109,17 @@ impl World {
     }
 
     /// Remove a component from an entity
-    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), MecsErrors> {
+    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityError> {
         self.entities.remove_component_by_entity_id::<T>(index)
     }
 
     /// Adds the supplied component to the entity at the supplied index
-    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), MecsErrors> {
+    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityError> {
         self.entities.add_component_by_entity_id(data, index)
     }
 
     /// Despawns the supplied entity
-    pub fn despawn(&mut self, index: usize) -> Result<(), MecsErrors> {
+    pub fn despawn(&mut self, index: usize) -> Result<(), EntityError> {
         self.entities.delete_entity_by_id(index)
     }
 

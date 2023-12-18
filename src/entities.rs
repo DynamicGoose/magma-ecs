@@ -8,7 +8,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::errors::MecsErrors;
+use crate::error::EntityError;
 
 pub type Component = Rc<RefCell<dyn Any>>;
 pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
@@ -53,19 +53,19 @@ impl Entities {
     world.spawn().with_component(32_u32).unwrap();
     ```
     */
-    pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, MecsErrors> {
+    pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, EntityError> {
         let type_id = data.type_id();
         let index = self.into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
             let component = components
                 .get_mut(index)
-                .ok_or(MecsErrors::ComponentNotRegistered)?;
+                .ok_or(EntityError::ComponentNotRegistered)?;
             *component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
             self.map[index] |= *bit_mask;
         } else {
-            return Err(MecsErrors::ComponentNotRegistered);
+            return Err(EntityError::ComponentNotRegistered);
         }
         Ok(self)
     }
@@ -77,12 +77,12 @@ impl Entities {
     pub fn remove_component_by_entity_id<T: Any>(
         &mut self,
         index: usize,
-    ) -> Result<(), MecsErrors> {
+    ) -> Result<(), EntityError> {
         let type_id = TypeId::of::<T>();
         let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
             mask
         } else {
-            return Err(MecsErrors::ComponentNotRegistered);
+            return Err(EntityError::ComponentNotRegistered);
         };
 
         if self.map[index] & *mask == *mask {
@@ -95,12 +95,12 @@ impl Entities {
         &mut self,
         data: impl Any,
         index: usize,
-    ) -> Result<(), MecsErrors> {
+    ) -> Result<(), EntityError> {
         let type_id = data.type_id();
         let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
             mask
         } else {
-            return Err(MecsErrors::ComponentNotRegistered);
+            return Err(EntityError::ComponentNotRegistered);
         };
         self.map[index] |= *mask;
 
@@ -109,11 +109,11 @@ impl Entities {
         Ok(())
     }
 
-    pub fn delete_entity_by_id(&mut self, index: usize) -> Result<(), MecsErrors> {
+    pub fn delete_entity_by_id(&mut self, index: usize) -> Result<(), EntityError> {
         if let Some(map) = self.map.get_mut(index) {
             *map = 0;
         } else {
-            return Err(MecsErrors::EntityDoesNotExist);
+            return Err(EntityError::EntityDoesNotExist);
         }
         Ok(())
     }
