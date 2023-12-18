@@ -8,4 +8,3 @@ homepage = "https://dynamicgoose.github.io/magma3d-engine/"
 repository = "https://github.com/DynamicGoose/mecs"
 
 [dependencies]
-thiserror = "1.0.50"
