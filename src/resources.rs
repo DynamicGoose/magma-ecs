@@ -5,11 +5,11 @@ use std::{
 
 #[derive(Default)]
 pub struct Resources {
-    data: HashMap<TypeId, Box<dyn Any>>,
+    data: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
 
 impl Resources {
-    pub fn add(&mut self, data: impl Any) {
+    pub fn add(&mut self, data: impl Any + Send + Sync) {
         self.data.insert(data.type_id(), Box::new(data));
     }
 

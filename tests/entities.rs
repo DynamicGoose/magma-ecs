@@ -39,8 +39,8 @@ fn entity_query() {
         .unwrap()
         .run();
 
-    let locations: &Vec<Rc<RefCell<dyn Any>>> = &query.components[0];
-    let sizes: &Vec<Rc<RefCell<dyn Any>>> = &query.components[1];
+    let locations: &Vec<Rc<RefCell<dyn Any + Send + Sync>>> = &query.components[0];
+    let sizes: &Vec<Rc<RefCell<dyn Any + Send + Sync>>> = &query.components[1];
 
     let borrowed_first_location = locations[0].borrow();
     let first_location = borrowed_first_location.downcast_ref::<Location>().unwrap();

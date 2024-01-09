@@ -31,7 +31,7 @@ impl World {
     world.add_resource(10_u32);
     ```
     */
-    pub fn add_resource(&mut self, resource_data: impl Any) {
+    pub fn add_resource(&mut self, resource_data: impl Any + Send + Sync) {
         self.resources.add(resource_data);
     }
 
@@ -114,7 +114,11 @@ impl World {
     }
 
     /// Adds the supplied component to the entity at the supplied index
-    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityError> {
+    pub fn add_component(
+        &mut self,
+        data: impl Any + Send + Sync,
+        index: usize,
+    ) -> Result<(), EntityError> {
         self.entities.add_component_by_entity_id(data, index)
     }
 

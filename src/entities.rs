@@ -10,7 +10,7 @@ use std::{
 
 use crate::error::EntityError;
 
-pub type Component = Rc<RefCell<dyn Any>>;
+pub type Component = Rc<RefCell<dyn Any + Send + Sync>>;
 pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
 
 #[derive(Debug, Default)]
@@ -53,7 +53,10 @@ impl Entities {
     world.spawn().with_component(32_u32).unwrap();
     ```
     */
-    pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, EntityError> {
+    pub fn with_component(
+        &mut self,
+        data: impl Any + Send + Sync,
+    ) -> Result<&mut Self, EntityError> {
         let type_id = data.type_id();
         let index = self.into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
@@ -93,7 +96,7 @@ impl Entities {
 
     pub fn add_component_by_entity_id(
         &mut self,
-        data: impl Any,
+        data: impl Any + Send + Sync,
         index: usize,
     ) -> Result<(), EntityError> {
         let type_id = data.type_id();
