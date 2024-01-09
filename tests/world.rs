@@ -4,7 +4,7 @@ use magma_ecs::World;
 fn startup() {
     let mut world = World::new();
     world.register_component::<u32>();
-    world.update(vec![], vec![&create_u32_entity]);
+    world.update(vec![], vec![create_u32_entity]);
     let query = world.query().with_component::<u32>().unwrap().run();
     assert_eq!(query.indexes.len(), 1);
 }

@@ -88,8 +88,6 @@ impl<'a> Query<'a> {
 #[cfg(test)]
 mod test {
 
-    use std::cell::{Ref, RefMut};
-
     use crate::entities::query_entity::QueryEntity;
 
     use super::*;
@@ -147,7 +145,7 @@ mod test {
         let indexes = &query_result.indexes;
         dbg!(indexes);
 
-        let first_u32 = *u32s[0].borrow().downcast_ref::<u32>().unwrap();
+        let first_u32 = *u32s[0].read().unwrap().downcast_ref::<u32>().unwrap();
         dbg!(first_u32);
 
         assert!(
@@ -175,8 +173,8 @@ mod test {
         assert_eq!(entities.len(), 1);
         for entity in entities {
             assert_eq!(entity.id, 0);
-            let health: Ref<u32> = entity.get_component::<u32>().unwrap();
-            assert_eq!(*health, 100);
+            let health = entity.get_component::<u32>().unwrap();
+            assert_eq!(*health.downcast_ref::<u32>().unwrap(), 100);
         }
     }
 
@@ -195,16 +193,16 @@ mod test {
         assert_eq!(entities.len(), 1);
         for entity in entities {
             assert_eq!(entity.id, 0);
-            let mut health: RefMut<u32> = entity.get_component_mut::<u32>().unwrap();
-            assert_eq!(*health, 100);
-            *health += 1;
+            let mut health = entity.get_component_mut::<u32>().unwrap();
+            assert_eq!(*health.downcast_ref::<u32>().unwrap(), 100);
+            *health.downcast_mut::<u32>().unwrap() += 1;
         }
 
         let entities: Vec<QueryEntity> = query.with_component::<u32>().unwrap().run_entity();
 
         for entity in entities {
-            let health: Ref<u32> = entity.get_component::<u32>().unwrap();
-            assert_eq!(*health, 101);
+            let health = entity.get_component::<u32>().unwrap();
+            assert_eq!(*health.downcast_ref::<u32>().unwrap(), 101);
         }
     }
 }

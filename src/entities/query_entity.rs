@@ -1,7 +1,6 @@
 use std::{
     any::{Any, TypeId},
-    cell::{Ref, RefCell, RefMut},
-    rc::Rc,
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use crate::error::EntityError;
@@ -9,7 +8,7 @@ use crate::error::EntityError;
 use super::Entities;
 
 type ExtractedComponents<'a> =
-    Result<&'a Vec<Option<Rc<RefCell<dyn Any + Send + Sync>>>>, EntityError>;
+    Result<&'a Vec<Option<Arc<RwLock<dyn Any + Send + Sync>>>>, EntityError>;
 
 /// A query entity with the entities id and a reference to the `Entities` struct.
 pub struct QueryEntity<'a> {
@@ -29,25 +28,30 @@ impl<'a> QueryEntity<'a> {
             .get(&type_id)
             .ok_or(EntityError::ComponentNotInQuery)
     }
-    pub fn get_component<T: Any + Send + Sync>(&self) -> Result<Ref<T>, EntityError> {
+
+    pub fn get_component<T: Any + Send + Sync>(
+        &self,
+    ) -> Result<RwLockReadGuard<dyn Any + Send + Sync>, EntityError> {
         let components = self.extract_components::<T>()?;
         let borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
-            .borrow();
-        Ok(Ref::map(borrowed_component, |any| {
-            any.downcast_ref::<T>().unwrap()
-        }))
+            .read()
+            .or(Err(EntityError::ComponentDataDoesNotExist));
+
+        borrowed_component
     }
 
-    pub fn get_component_mut<T: Any + Send + Sync>(&self) -> Result<RefMut<T>, EntityError> {
+    pub fn get_component_mut<T: Any + Send + Sync>(
+        &self,
+    ) -> Result<RwLockWriteGuard<dyn Any + Send + Sync>, EntityError> {
         let components = self.extract_components::<T>()?;
         let borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
-            .borrow_mut();
-        Ok(RefMut::map(borrowed_component, |any| {
-            any.downcast_mut::<T>().unwrap()
-        }))
+            .write()
+            .or(Err(EntityError::ComponentDataDoesNotExist));
+
+        borrowed_component
     }
 }
