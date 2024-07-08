@@ -50,9 +50,11 @@ impl Entities {
     ```
     use magma_ecs::World;
 
-    let mut world = World::new();
+    let world = World::new();
     world.register_component::<u32>();
-    world.spawn().with_component(32_u32).unwrap();
+
+    let mut entities = world.entities_write();
+    entities.create_entity().with_component(32_u32).unwrap();
     ```
     */
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, EntityError> {

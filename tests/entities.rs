@@ -33,7 +33,6 @@ fn entity_query() {
     entities.create_entity().with_component(Location(33.0, 33.0)).unwrap();
     entities.create_entity().with_component(Size(11.0)).unwrap();
 
-    let entities = world.entities_read();
     let query = entities
         .query()
         .with_component::<Location>()
@@ -73,9 +72,8 @@ fn delete_component_from_entity() {
         .with_component(Size(20.0))
         .unwrap();
 
-    world.remove_component::<Location>(0).unwrap();
+    entities.remove_component_by_entity_id::<Location>(0).unwrap();
 
-    let entities = world.entities_read();
     let query = entities
         .query()
         .with_component::<Location>()
@@ -95,9 +93,8 @@ fn add_component_to_entity() {
     let mut entities = world.entities_write();
     entities.create_entity().with_component(Location(10.0, 15.0)).unwrap();
 
-    world.add_component(Size(20.0), 0).unwrap();
+    entities.add_component_by_entity_id(Size(20.0), 0).unwrap();
 
-    let entities = world.entities_read();
     let query = entities
         .query()
         .with_component::<Location>()
@@ -121,7 +118,6 @@ fn delete_entity() {
 
     entities.delete_entity_by_id(0).unwrap();
 
-    let entities = world.entities_read();
     let query = entities.query().with_component::<Location>().unwrap().run();
 
     let borrowed_location = query.components[0][0].borrow();
@@ -129,10 +125,8 @@ fn delete_entity() {
 
     assert!(query.indexes.len() == 1 && location.0 == 20.0);
 
-    let mut entities = world.entities_write();
     entities.create_entity().with_component(Location(30.0, 35.0)).unwrap();
 
-    let entities = world.entities_read();
     let query = entities.query().with_component::<Location>().unwrap().run();
     let borrowed_location = query.components[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();

@@ -88,6 +88,8 @@ impl World {
         self.entities.write().unwrap().register_component::<T>();
     }
 
+    // TODO: Inform about Deadlocks!!!
+    
     /// Returns a readlock on the world's entities
     pub fn entities_read(&self) -> RwLockReadGuard<Entities> {
         self.entities.read().unwrap()
