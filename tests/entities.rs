@@ -1,7 +1,4 @@
-use std::{
-    any::Any,
-    sync::{Arc, RwLock},
-};
+use std::{any::Any, cell::RefCell, rc::Rc};
 
 use magma_ecs::World;
 
@@ -42,10 +39,10 @@ fn entity_query() {
         .unwrap()
         .run();
 
-    let locations: &Vec<Arc<RwLock<dyn Any + Send + Sync>>> = &query.components[0];
-    let sizes: &Vec<Arc<RwLock<dyn Any + Send + Sync>>> = &query.components[1];
+    let locations: &Vec<Rc<RefCell<dyn Any>>> = &query.components[0];
+    let sizes: &Vec<Rc<RefCell<dyn Any>>> = &query.components[1];
 
-    let borrowed_first_location = locations[0].read().unwrap();
+    let borrowed_first_location = locations[0].borrow();
     let first_location = borrowed_first_location.downcast_ref::<Location>().unwrap();
 
     assert!(locations.len() == sizes.len() && locations.len() == 1 && first_location.0 == 32.0);
@@ -117,14 +114,14 @@ fn delete_entity() {
 
     let query = world.query().with_component::<Location>().unwrap().run();
 
-    let borrowed_location = query.components[0][0].read().unwrap();
+    let borrowed_location = query.components[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
 
     assert!(query.indexes.len() == 1 && location.0 == 20.0);
 
     world.spawn().with_component(Location(30.0, 35.0)).unwrap();
     let query = world.query().with_component::<Location>().unwrap().run();
-    let borrowed_location = query.components[0][0].read().unwrap();
+    let borrowed_location = query.components[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
 
     assert_eq!(location.0, 30.0);

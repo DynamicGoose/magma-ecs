@@ -3,13 +3,14 @@ pub mod query_entity;
 
 use std::{
     any::{Any, TypeId},
+    cell::RefCell,
     collections::HashMap,
-    sync::{Arc, RwLock},
+    rc::Rc,
 };
 
 use crate::error::EntityError;
 
-pub type Component = Arc<RwLock<dyn Any + Send + Sync>>;
+pub type Component = Rc<RefCell<dyn Any>>;
 pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
 
 #[derive(Debug, Default)]
@@ -52,17 +53,14 @@ impl Entities {
     world.spawn().with_component(32_u32).unwrap();
     ```
     */
-    pub fn with_component(
-        &mut self,
-        data: impl Any + Send + Sync,
-    ) -> Result<&mut Self, EntityError> {
+    pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self, EntityError> {
         let type_id = data.type_id();
         let index = self.into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
             let component = components
                 .get_mut(index)
                 .ok_or(EntityError::ComponentNotRegistered)?;
-            *component = Some(Arc::new(RwLock::new(data)));
+            *component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
             self.map[index] |= *bit_mask;
@@ -95,7 +93,7 @@ impl Entities {
 
     pub fn add_component_by_entity_id(
         &mut self,
-        data: impl Any + Send + Sync,
+        data: impl Any,
         index: usize,
     ) -> Result<(), EntityError> {
         let type_id = data.type_id();
@@ -107,7 +105,7 @@ impl Entities {
         self.map[index] |= *mask;
 
         let components = self.components.get_mut(&type_id).unwrap();
-        components[index] = Some(Arc::new(RwLock::new(data)));
+        components[index] = Some(Rc::new(RefCell::new(data)));
         Ok(())
     }
 
@@ -178,7 +176,7 @@ mod test {
 
         let first_health = &entities.components.get(&TypeId::of::<Health>()).unwrap()[0];
         let wrapped_health = first_health.as_ref().unwrap();
-        let borrowed_health = wrapped_health.read().unwrap();
+        let borrowed_health = wrapped_health.borrow();
         let health = borrowed_health.downcast_ref::<Health>().unwrap();
 
         assert_eq!(health.0, 100);
@@ -239,7 +237,7 @@ mod test {
         let speed_type_id = TypeId::of::<Speed>();
         let wrapped_speeds = entities.components.get(&speed_type_id).unwrap();
         let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
-        let borrowed_speed = wrapped_speed.read().unwrap();
+        let borrowed_speed = wrapped_speed.borrow();
         let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
 
         assert!(entities.map[0] == 3 && speed.0 == 50);
@@ -274,8 +272,7 @@ mod test {
         let borrowed_health = entities.components.get(&type_id).unwrap()[0]
             .as_ref()
             .unwrap()
-            .read()
-            .unwrap();
+            .borrow();
         let health = borrowed_health.downcast_ref::<Health>().unwrap();
 
         assert!(entities.map[0] == 1 && health.0 == 25);

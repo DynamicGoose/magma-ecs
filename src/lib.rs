@@ -31,7 +31,7 @@ impl World {
     world.add_resource(10_u32);
     ```
     */
-    pub fn add_resource(&mut self, resource_data: impl Any + Send + Sync) {
+    pub fn add_resource(&mut self, resource_data: impl Any) {
         self.resources.add(resource_data);
     }
 
@@ -114,11 +114,7 @@ impl World {
     }
 
     /// Adds the supplied component to the entity at the supplied index
-    pub fn add_component(
-        &mut self,
-        data: impl Any + Send + Sync,
-        index: usize,
-    ) -> Result<(), EntityError> {
+    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityError> {
         self.entities.add_component_by_entity_id(data, index)
     }
 
@@ -131,7 +127,11 @@ impl World {
     This takes a `Vec` of references to functions that take a reference to `World` as well as a `Vec` of references to functions that take a mutable reference to `World`.
     It runs all of the supplied functions once on the `World`.
     */
-    pub fn update(&mut self, systems_ref: Vec<fn(&Self)>, systems_mut: Vec<fn(&mut Self)>) {
+    pub fn update(
+        &mut self,
+        systems_ref: Vec<&dyn Fn(&Self)>,
+        systems_mut: Vec<&dyn Fn(&mut Self)>,
+    ) {
         for system in systems_ref {
             system(self);
         }
