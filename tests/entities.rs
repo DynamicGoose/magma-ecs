@@ -127,5 +127,7 @@ fn delete_entity() {
     assert_eq!(location.0, 30.0);
 }
 
+#[allow(dead_code)]
 struct Location(pub f32, pub f32);
+#[allow(dead_code)]
 struct Size(pub f32);

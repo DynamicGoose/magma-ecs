@@ -6,5 +6,3 @@ license = "MIT"
 description = "Entity-Component-System for the Magma3D game engine"
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
 repository = "https://github.com/DynamicGoose/mecs"
-
-[dependencies]
