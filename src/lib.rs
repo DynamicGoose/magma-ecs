@@ -1,19 +1,19 @@
-use std::any::Any;
+use std::{any::Any, sync::{RwLock, RwLockReadGuard, RwLockWriteGuard}};
 
-use entities::{query::Query, Entities};
+use entities::Entities;
 use error::EntityError;
 use resources::Resources;
 
 pub mod entities;
 pub mod error;
 
-mod resources;
+pub mod resources;
 
 /// The `World` struct holds all the data of our world.
 #[derive(Default)]
 pub struct World {
-    resources: Resources,
-    entities: Entities,
+    resources: RwLock<Resources>,
+    entities: RwLock<Entities>,
 }
 
 impl World {
@@ -31,57 +31,71 @@ impl World {
     world.add_resource(10_u32);
     ```
     */
-    pub fn add_resource(&mut self, resource_data: impl Any) {
-        self.resources.add(resource_data);
+    pub fn add_resource(&self, resource_data: impl Any) {
+        self.resources.write().unwrap().add(resource_data);
     }
 
     /**
-    Get an immutable reference to a resource.
+    Get an immutable reference to a resource. The type of the resource must be added using turbofish notation.
     ```
     use magma_ecs::World;
+    use magma_ecs::resources::Resources;
 
     let mut world = World::new();
     world.add_resource(10_u32);
-    let resource = world.get_resource::<u32>().unwrap();
+    // get readlock on resources
+    let resources = world.resources_read();
+    // get resource
+    let resource = resources.get_ref::<u32>().unwrap();
     assert_eq!(*resource, 10);
     ```
     */
-    pub fn get_resource<T: Any>(&self) -> Option<&T> {
-        self.resources.get_ref::<T>()
+    /// Returns a readlock on the world's resources
+    pub fn resources_read(&self) -> RwLockReadGuard<Resources> {
+        self.resources.read().unwrap()
     }
 
     /**
     Get a mutable reference to a resource. The type of the resource must be added using turbofish notation.
     ```
     use magma_ecs::World;
+    use magma_ecs::resources::Resources;
 
     let mut world = World::new();
     world.add_resource(10_u32);
     {
-        let resource = world.get_resource_mut::<u32>().unwrap();
+        let mut resources = world.resources_write();
+        let resource = resources.get_mut::<u32>().unwrap();
         *resource += 1;
     }
-    let resource = world.get_resource::<u32>().unwrap();
+    let resources = world.resources_read();
+    let resource = resources.get_ref::<u32>().unwrap();
     assert_eq!(*resource, 11);
     ```
     */
-    pub fn get_resource_mut<T: Any>(&mut self) -> Option<&mut T> {
-        self.resources.get_mut::<T>()
+    /// Returns a writelock on the world's resources
+    pub fn resources_write(&self) -> RwLockWriteGuard<Resources> {
+        self.resources.write().unwrap()
     }
 
     /// Removes the requested resource from the world if it exists.
-    pub fn remove_resource<T: Any>(&mut self) {
-        self.resources.remove::<T>();
+    pub fn remove_resource<T: Any>(&self) {
+        self.resources.write().unwrap().remove::<T>();
     }
 
     /// There is currently a limit of 128 components per `World`. This will be improved in the future.
-    pub fn register_component<T: Any>(&mut self) {
-        self.entities.register_component::<T>();
+    pub fn register_component<T: Any>(&self) {
+        self.entities.write().unwrap().register_component::<T>();
     }
 
-    /// Spawns a new entity
-    pub fn spawn(&mut self) -> &mut Entities {
-        self.entities.create_entity()
+    /// Returns a readlock on the world's entities
+    pub fn entities_read(&self) -> RwLockReadGuard<Entities> {
+        self.entities.read().unwrap()
+    }
+
+    /// Returns a writelock on the world's entities
+    pub fn entities_write(&self) -> RwLockWriteGuard<Entities> {
+        self.entities.write().unwrap()
     }
 
     /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
@@ -90,37 +104,31 @@ impl World {
     ///
     /// let mut world = World::new();
     /// world.register_component::<u32>();
-    /// world.spawn().with_component(32_u32).unwrap();
+    /// 
+    /// let mut entities = world.entities_write();
+    /// entities.create_entity().with_component(32_u32).unwrap();
     ///
-    /// let query = world
+    /// let query = entities
     ///     .query()
     ///     .with_component::<u32>()
     ///     .unwrap()
     ///     .run();
     ///
-    /// let query = world
+    /// let query = entities
     ///     .query()
     ///     .with_component::<u32>()
     ///     .unwrap()
     ///     .run_entity();
     /// ```
-    pub fn query(&self) -> Query {
-        Query::new(&self.entities)
-    }
 
     /// Remove a component from an entity
-    pub fn remove_component<T: Any>(&mut self, index: usize) -> Result<(), EntityError> {
-        self.entities.remove_component_by_entity_id::<T>(index)
+    pub fn remove_component<T: Any>(&self, index: usize) -> Result<(), EntityError> {
+        self.entities.write().unwrap().remove_component_by_entity_id::<T>(index)
     }
 
     /// Adds the supplied component to the entity at the supplied index
-    pub fn add_component(&mut self, data: impl Any, index: usize) -> Result<(), EntityError> {
-        self.entities.add_component_by_entity_id(data, index)
-    }
-
-    /// Despawns the supplied entity
-    pub fn despawn(&mut self, index: usize) -> Result<(), EntityError> {
-        self.entities.delete_entity_by_id(index)
+    pub fn add_component(&self, data: impl Any, index: usize) -> Result<(), EntityError> {
+        self.entities.write().unwrap().add_component_by_entity_id(data, index)
     }
 
     /**

@@ -4,12 +4,13 @@ use magma_ecs::World;
 
 #[test]
 fn create_entity() {
-    let mut world = World::new();
+    let world = World::new();
     world.register_component::<Location>();
     world.register_component::<Size>();
 
-    world
-        .spawn()
+    let mut entities = world.entities_write();
+    entities
+        .create_entity()
         .with_component(Location(32.0, 32.0))
         .unwrap()
         .with_component(Size(10.0))
@@ -18,20 +19,22 @@ fn create_entity() {
 
 #[test]
 fn entity_query() {
-    let mut world = World::new();
+    let world = World::new();
     world.register_component::<Location>();
     world.register_component::<Size>();
 
-    world
-        .spawn()
+    let mut entities = world.entities_write();
+    entities
+        .create_entity()
         .with_component(Location(32.0, 32.0))
         .unwrap()
         .with_component(Size(10.0))
         .unwrap();
-    world.spawn().with_component(Location(33.0, 33.0)).unwrap();
-    world.spawn().with_component(Size(11.0)).unwrap();
+    entities.create_entity().with_component(Location(33.0, 33.0)).unwrap();
+    entities.create_entity().with_component(Size(11.0)).unwrap();
 
-    let query = world
+    let entities = world.entities_read();
+    let query = entities
         .query()
         .with_component::<Location>()
         .unwrap()
@@ -50,20 +53,21 @@ fn entity_query() {
 
 #[test]
 fn delete_component_from_entity() {
-    let mut world = World::new();
+    let world = World::new();
 
     world.register_component::<Location>();
     world.register_component::<Size>();
 
-    world
-        .spawn()
+    let mut entities = world.entities_write();
+    entities
+        .create_entity()
         .with_component(Location(10.0, 11.0))
         .unwrap()
         .with_component(Size(10.0))
         .unwrap();
 
-    world
-        .spawn()
+    entities
+        .create_entity()
         .with_component(Location(20.0, 11.0))
         .unwrap()
         .with_component(Size(20.0))
@@ -71,7 +75,8 @@ fn delete_component_from_entity() {
 
     world.remove_component::<Location>(0).unwrap();
 
-    let query = world
+    let entities = world.entities_read();
+    let query = entities
         .query()
         .with_component::<Location>()
         .unwrap()
@@ -84,14 +89,16 @@ fn delete_component_from_entity() {
 
 #[test]
 fn add_component_to_entity() {
-    let mut world = World::new();
+    let world = World::new();
     world.register_component::<Location>();
     world.register_component::<Size>();
-    world.spawn().with_component(Location(10.0, 15.0)).unwrap();
+    let mut entities = world.entities_write();
+    entities.create_entity().with_component(Location(10.0, 15.0)).unwrap();
 
     world.add_component(Size(20.0), 0).unwrap();
 
-    let query = world
+    let entities = world.entities_read();
+    let query = entities
         .query()
         .with_component::<Location>()
         .unwrap()
@@ -104,23 +111,29 @@ fn add_component_to_entity() {
 
 #[test]
 fn delete_entity() {
-    let mut world = World::new();
+    let world = World::new();
     world.register_component::<Location>();
     world.register_component::<Size>();
-    world.spawn().with_component(Location(10.0, 15.0)).unwrap();
-    world.spawn().with_component(Location(20.0, 25.0)).unwrap();
 
-    world.despawn(0).unwrap();
+    let mut entities = world.entities_write();
+    entities.create_entity().with_component(Location(10.0, 15.0)).unwrap();
+    entities.create_entity().with_component(Location(20.0, 25.0)).unwrap();
 
-    let query = world.query().with_component::<Location>().unwrap().run();
+    entities.delete_entity_by_id(0).unwrap();
+
+    let entities = world.entities_read();
+    let query = entities.query().with_component::<Location>().unwrap().run();
 
     let borrowed_location = query.components[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
 
     assert!(query.indexes.len() == 1 && location.0 == 20.0);
 
-    world.spawn().with_component(Location(30.0, 35.0)).unwrap();
-    let query = world.query().with_component::<Location>().unwrap().run();
+    let mut entities = world.entities_write();
+    entities.create_entity().with_component(Location(30.0, 35.0)).unwrap();
+
+    let entities = world.entities_read();
+    let query = entities.query().with_component::<Location>().unwrap().run();
     let borrowed_location = query.components[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
 

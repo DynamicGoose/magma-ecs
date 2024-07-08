@@ -8,6 +8,8 @@ use std::{
     rc::Rc,
 };
 
+use query::Query;
+
 use crate::error::EntityError;
 
 pub type Component = Rc<RefCell<dyn Any>>;
@@ -116,6 +118,10 @@ impl Entities {
             return Err(EntityError::EntityDoesNotExist);
         }
         Ok(())
+    }
+
+    pub fn query(&self) -> Query {
+        Query::new(self)
     }
 }
 
