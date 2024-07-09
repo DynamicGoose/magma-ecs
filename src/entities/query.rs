@@ -11,7 +11,7 @@ pub struct Query<'a> {
     type_ids: Vec<TypeId>,
 }
 
-/// Result of a `Query` with indexes of the found entites and the queried component vecs.
+/// Result of a [`Query`] with indexes of the found entites and the queried component vecs.
 pub struct QueryResult {
     pub indexes: Vec<usize>,
     pub components: Vec<Vec<Component>>,
@@ -26,6 +26,7 @@ impl<'a> Query<'a> {
         }
     }
 
+    /// Add component to the [`Query`]
     pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, EntityError> {
         let type_id = TypeId::of::<T>();
         if let Some(bit_mask) = self.entities.get_bitmask(&type_id) {
@@ -37,6 +38,7 @@ impl<'a> Query<'a> {
         Ok(self)
     }
 
+    /// Run the [`Query`]
     pub fn run(&self) -> QueryResult {
         let indexes: Vec<usize> = self
             .entities
@@ -69,6 +71,7 @@ impl<'a> Query<'a> {
         }
     }
 
+    /// Different run method with easier to use API
     pub fn run_entity(&self) -> Vec<QueryEntity> {
         self.entities
             .map

@@ -1,3 +1,4 @@
+//! provides the [`Resources`] struct.
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -9,7 +10,7 @@ pub struct Resources {
 }
 
 impl Resources {
-    pub fn add(&mut self, data: impl Any + Send + Sync) {
+    pub(crate) fn add(&mut self, data: impl Any + Send + Sync) {
         self.data.insert(data.type_id(), Box::new(data));
     }
 
@@ -31,7 +32,7 @@ impl Resources {
         }
     }
 
-    pub fn remove<T: Any>(&mut self) {
+    pub(crate) fn remove<T: Any>(&mut self) {
         let type_id = TypeId::of::<T>();
         self.data.remove(&type_id);
     }

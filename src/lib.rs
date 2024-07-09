@@ -1,3 +1,27 @@
+//! This crate provides the Entity-Component-System of the [Magma3D-Engine](https://dynamicgoose.github.io/magma3d-engine/).
+//!
+//! The crate provides a [`World`] struct with [`Resources`] and [`Entities`].
+//! An entity is just an index into the component storage.
+//! A resource is like a global component, independant from the [`Entities`].
+//!
+//! Example for creating and setting up a [`World`]:
+//! ```
+//! use magma_ecs::World;
+//!
+//! let world = World::new();
+//! // register a component type
+//! world.register_component::<u32>();
+//! // add a resource
+//! world.add_resource(10_u32);
+//!
+//! // create entity with registered component.
+//! // It is recommended to free read/write locks as quickly as possible. Use scopes to do that.
+//! {
+//!     let mut entities = world.entities_write();
+//!     entities.create_entity().with_component(20_u32).unwrap();
+//! }
+//! ```
+
 use std::{
     any::Any,
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},

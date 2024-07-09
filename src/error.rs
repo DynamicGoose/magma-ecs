@@ -1,3 +1,4 @@
+//! Error types
 #[derive(Debug)]
 pub enum EntityError {
     /// attempted to access unregistered component

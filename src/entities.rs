@@ -1,4 +1,8 @@
+//! Provides the [`Entities`] struct as well as [`query`] and [`query_entity`] modules.
+
+/// Basic query functionality
 pub mod query;
+/// Easier to use query API
 pub mod query_entity;
 
 use std::{
@@ -11,8 +15,8 @@ use query::Query;
 
 use crate::error::EntityError;
 
-pub type Component = Arc<RwLock<dyn Any + Send + Sync>>;
-pub type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
+pub(crate) type Component = Arc<RwLock<dyn Any + Send + Sync>>;
+pub(crate) type ComponentMap = HashMap<TypeId, Vec<Option<Component>>>;
 
 #[derive(Debug, Default)]
 pub struct Entities {
@@ -30,6 +34,7 @@ impl Entities {
         self.bit_masks.insert(type_id, 1 << self.bit_masks.len());
     }
 
+    /// Create an entity.
     pub fn create_entity(&mut self) -> &mut Self {
         if let Some((index, _)) = self.map.iter().enumerate().find(|(_, mask)| **mask == 0) {
             self.into_index = index;
@@ -124,6 +129,7 @@ impl Entities {
         Ok(())
     }
 
+    /// Get a [`Query`] on the [`Entities`]
     pub fn query(&self) -> Query {
         Query::new(self)
     }
