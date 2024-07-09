@@ -3,7 +3,8 @@ pub mod query_entity;
 
 use std::{
     any::{Any, TypeId},
-    collections::HashMap, sync::{Arc, RwLock},
+    collections::HashMap,
+    sync::{Arc, RwLock},
 };
 
 use query::Query;
@@ -23,7 +24,7 @@ pub struct Entities {
 }
 
 impl Entities {
-    pub fn register_component<T: Any>(&mut self) {
+    pub(crate) fn register_component<T: Any + Send + Sync>(&mut self) {
         let type_id = TypeId::of::<T>();
         self.components.insert(type_id, vec![]);
         self.bit_masks.insert(type_id, 1 << self.bit_masks.len());
@@ -55,7 +56,10 @@ impl Entities {
     entities.create_entity().with_component(32_u32).unwrap();
     ```
     */
-    pub fn with_component(&mut self, data: impl Any + Send + Sync) -> Result<&mut Self, EntityError> {
+    pub fn with_component(
+        &mut self,
+        data: impl Any + Send + Sync,
+    ) -> Result<&mut Self, EntityError> {
         let type_id = data.type_id();
         let index = self.into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
@@ -72,11 +76,11 @@ impl Entities {
         Ok(self)
     }
 
-    pub fn get_bitmask(&self, type_id: &TypeId) -> Option<u128> {
+    pub(crate) fn get_bitmask(&self, type_id: &TypeId) -> Option<u128> {
         self.bit_masks.get(type_id).copied()
     }
 
-    pub fn remove_component_by_entity_id<T: Any>(
+    pub fn remove_component_by_entity_id<T: Any + Send + Sync>(
         &mut self,
         index: usize,
     ) -> Result<(), EntityError> {
@@ -278,7 +282,8 @@ mod test {
         let borrowed_health = entities.components.get(&type_id).unwrap()[0]
             .as_ref()
             .unwrap()
-            .read().unwrap();
+            .read()
+            .unwrap();
         let health = borrowed_health.downcast_ref::<Health>().unwrap();
 
         assert!(entities.map[0] == 1 && health.0 == 25);

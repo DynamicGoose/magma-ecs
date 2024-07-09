@@ -1,7 +1,9 @@
-use std::{any::Any, sync::{RwLock, RwLockReadGuard, RwLockWriteGuard}};
+use std::{
+    any::Any,
+    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
 use entities::Entities;
-use error::EntityError;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use resources::Resources;
 
@@ -10,7 +12,12 @@ pub mod error;
 
 pub mod resources;
 
-/// The `World` struct holds all the data of our world.
+/// The [`World`] struct holds all the data of our world.
+/// <div class="warning">
+///
+/// Be careful with acquiring read/write locks. If you try to acquire a lock **while the current funktion holds another lock**, they will **deadlock**!
+///
+/// </div>
 #[derive(Default)]
 pub struct World {
     resources: RwLock<Resources>,
@@ -18,17 +25,18 @@ pub struct World {
 }
 
 impl World {
-    /// Creates a new `World`. Must be `mut` to be operated on.
+    /// Creates a new [`World`].
     pub fn new() -> Self {
         Self::default()
     }
 
     /**
-    This adds a resource, which can be of any type that implements the `std::any::Any` trait.
+    This adds a resource to the [`World`]'s [`Resources`], which can be of any type that implements the [`Any`], [`Send`] and [`Sync`] traits.
+    [`Send`] and [`Sync`] are required for thread safety. **Don't use if you currently hold a lock on the [`Resources`]!**
     ```
     use magma_ecs::World;
 
-    let mut world = World::new();
+    let world = World::new();
     world.add_resource(10_u32);
     ```
     */
@@ -37,59 +45,60 @@ impl World {
     }
 
     /**
-    Get an immutable reference to a resource. The type of the resource must be added using turbofish notation.
+    Removes the requested resource from the [`World`]'s [`Resources`] if it exists.
+    Use turbofish notation.
     ```
     use magma_ecs::World;
-    use magma_ecs::resources::Resources;
 
-    let mut world = World::new();
+    let world = World::new();
+    // add u32 resource
     world.add_resource(10_u32);
-    // get readlock on resources
-    let resources = world.resources_read();
-    // get resource
-    let resource = resources.get_ref::<u32>().unwrap();
-    assert_eq!(*resource, 10);
+    //remove resource
+    world.remove_resource::<u32>();
+
     ```
-    */
-    /// Returns a readlock on the world's resources
+     */
+    pub fn remove_resource<T: Any + Send + Sync>(&self) {
+        self.resources.write().unwrap().remove::<T>();
+    }
+
+    /**
+    Returns a readlock on the [`World`]'s [`Resources`].
+    ```
+    use magma_ecs::World;
+
+    let world = World::new();
+
+    // acquire readlock on resources
+    let resources = world.resources_read();
+    // get values from the resources...
+    ```
+     */
     pub fn resources_read(&self) -> RwLockReadGuard<Resources> {
         self.resources.read().unwrap()
     }
 
     /**
-    Get a mutable reference to a resource. The type of the resource must be added using turbofish notation.
+    Returns a writelock on the [`World`]'s [`Resources`].
     ```
     use magma_ecs::World;
-    use magma_ecs::resources::Resources;
 
-    let mut world = World::new();
-    world.add_resource(10_u32);
-    {
-        let mut resources = world.resources_write();
-        let resource = resources.get_mut::<u32>().unwrap();
-        *resource += 1;
-    }
-    let resources = world.resources_read();
-    let resource = resources.get_ref::<u32>().unwrap();
-    assert_eq!(*resource, 11);
+    let world = World::new();
+
+    // acquire readlock on resources
+    let mut resources = world.resources_write();
+    // modify values in the resources...
     ```
     */
-    /// Returns a writelock on the world's resources
     pub fn resources_write(&self) -> RwLockWriteGuard<Resources> {
         self.resources.write().unwrap()
     }
 
-    /// Removes the requested resource from the world if it exists.
-    pub fn remove_resource<T: Any>(&self) {
-        self.resources.write().unwrap().remove::<T>();
-    }
-
+    /// Register a component.
     /// There is currently a limit of 128 components per `World`. This will be improved in the future.
-    pub fn register_component<T: Any>(&self) {
+    pub fn register_component<T: Any + Send + Sync>(&self) {
         self.entities.write().unwrap().register_component::<T>();
     }
-
-    // TODO: Inform about Deadlocks!!!
 
     /// Returns a readlock on the world's entities
     pub fn entities_read(&self) -> RwLockReadGuard<Entities> {
@@ -107,7 +116,7 @@ impl World {
     ///
     /// let mut world = World::new();
     /// world.register_component::<u32>();
-    /// 
+    ///
     /// let mut entities = world.entities_write();
     /// entities.create_entity().with_component(32_u32).unwrap();
     ///
@@ -124,20 +133,8 @@ impl World {
     ///     .run_entity();
     /// ```
 
-    /// Remove a component from an entity
-    pub fn remove_component<T: Any>(&self, index: usize) -> Result<(), EntityError> {
-        self.entities.write().unwrap().remove_component_by_entity_id::<T>(index)
-    }
-
-    /// Adds the supplied component to the entity at the supplied index
-    pub fn add_component(&self, data: impl Any + Send + Sync, index: usize) -> Result<(), EntityError> {
-        self.entities.write().unwrap().add_component_by_entity_id(data, index)
-    }
-
-    /**
-    This takes a `Vec` of references to functions that take a reference to `World` as well as a `Vec` of references to functions that take a mutable reference to `World`.
-    It runs all of the supplied functions once on the `World`.
-    */
+    /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
+    /// It runs all of the supplied functions in parallel once on the [`World`].
     pub fn update(&self, systems: Vec<fn(&Self)>) {
         systems.par_iter().for_each(|s| s(self));
     }
