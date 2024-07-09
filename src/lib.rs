@@ -159,7 +159,7 @@ impl World {
 
     /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
     /// It runs all of the supplied functions in parallel once on the [`World`].
-    pub fn update(&self, systems: Vec<fn(&Self)>) {
+    pub fn update(&self, systems: &Vec<fn(&Self)>) {
         systems.par_iter().for_each(|s| s(self));
     }
 }

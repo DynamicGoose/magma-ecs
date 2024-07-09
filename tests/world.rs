@@ -4,7 +4,7 @@ use magma_ecs::World;
 fn update() {
     let world = World::new();
     world.register_component::<u32>();
-    world.update(vec![create_u32_entity, create_u32_entity]);
+    world.update(&vec![create_u32_entity, create_u32_entity]);
 
     let entities = world.entities_read();
     let query = entities.query().with_component::<u32>().unwrap().run();

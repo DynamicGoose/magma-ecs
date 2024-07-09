@@ -1,6 +1,6 @@
 [package]
 name = "magma_ecs"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 edition = "2021"
 license = "MIT"
 description = "Entity-Component-System for the Magma3D game engine"
