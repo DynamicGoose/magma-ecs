@@ -12,6 +12,9 @@ use std::{
 };
 
 use query::Query;
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+};
 
 use crate::error::EntityError;
 
@@ -36,11 +39,16 @@ impl Entities {
 
     /// Create an entity.
     pub fn create_entity(&mut self) -> &mut Self {
-        if let Some((index, _)) = self.map.iter().enumerate().find(|(_, mask)| **mask == 0) {
+        if let Some((index, _)) = self
+            .map
+            .par_iter()
+            .enumerate()
+            .find_any(|(_, mask)| **mask == 0)
+        {
             self.into_index = index;
         } else {
             self.components
-                .iter_mut()
+                .par_iter_mut()
                 .for_each(|(_key, components)| components.push(None));
             self.map.push(0);
             self.into_index = self.map.len() - 1;

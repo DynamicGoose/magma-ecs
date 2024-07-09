@@ -1,5 +1,7 @@
 use std::any::{Any, TypeId};
 
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+
 use crate::error::EntityError;
 
 use super::{query_entity::QueryEntity, Component, Entities};
@@ -43,7 +45,7 @@ impl<'a> Query<'a> {
         let indexes: Vec<usize> = self
             .entities
             .map
-            .iter()
+            .par_iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {
                 if entity_map & self.map == self.map {
@@ -75,7 +77,7 @@ impl<'a> Query<'a> {
     pub fn run_entity(&self) -> Vec<QueryEntity> {
         self.entities
             .map
-            .iter()
+            .par_iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {
                 if entity_map & self.map == self.map {
