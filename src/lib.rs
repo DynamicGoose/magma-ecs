@@ -39,7 +39,7 @@ pub mod resources;
 /// The [`World`] struct holds all the data of our world.
 /// <div class="warning">
 ///
-/// Be careful with acquiring read/write locks. If you try to acquire a lock **while the current funktion holds another lock**, they will **deadlock**!
+/// Be careful with acquiring read/write locks. If you try to acquire a lock **while the current function holds another lock**, they will **deadlock**!
 ///
 /// </div>
 #[derive(Default)]
