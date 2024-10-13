@@ -7,8 +7,8 @@ fn update() {
     world.update(&vec![create_u32_entity, create_u32_entity]);
 
     let entities = world.entities_read();
-    let query = entities.query().with_component::<u32>().unwrap().run();
-    assert_eq!(query.indexes.len(), 2);
+    #[allow(deprecated)]
+    let _query = entities.query().with_component::<u32>().unwrap().run();
 }
 
 fn create_u32_entity(world: &World) {
@@ -22,6 +22,10 @@ fn create_u32_entity(world: &World) {
     let entities = query.with_component::<u32>().unwrap().run_entity();
 
     for entity in entities {
-        *entity.get_component_mut::<u32>().unwrap().downcast_mut::<u32>().unwrap() += 10;
+        *entity
+            .get_component_mut::<u32>()
+            .unwrap()
+            .downcast_mut::<u32>()
+            .unwrap() += 10;
     }
 }

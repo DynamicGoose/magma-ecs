@@ -14,7 +14,7 @@
 //! // add a resource
 //! world.add_resource(10_u32);
 //!
-//! // create entity with registered component.
+//! // create an entity with registered component
 //! // It is recommended to free read/write locks as quickly as possible. Use scopes to do that.
 //! {
 //!     let mut entities = world.entities_write();
@@ -133,29 +133,6 @@ impl World {
     pub fn entities_write(&self) -> RwLockWriteGuard<Entities> {
         self.entities.write().unwrap()
     }
-
-    /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
-    /// ```
-    /// use magma_ecs::World;
-    ///
-    /// let mut world = World::new();
-    /// world.register_component::<u32>();
-    ///
-    /// let mut entities = world.entities_write();
-    /// entities.create_entity().with_component(32_u32).unwrap();
-    ///
-    /// let query = entities
-    ///     .query()
-    ///     .with_component::<u32>()
-    ///     .unwrap()
-    ///     .run();
-    ///
-    /// let query = entities
-    ///     .query()
-    ///     .with_component::<u32>()
-    ///     .unwrap()
-    ///     .run_entity();
-    /// ```
 
     /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
     /// It runs all of the supplied functions in parallel once on the [`World`].

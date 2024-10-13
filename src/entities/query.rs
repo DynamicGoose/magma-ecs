@@ -6,6 +6,7 @@ use crate::error::EntityError;
 
 use super::{query_entity::QueryEntity, Component, Entities};
 
+/// Used for querying for entities with specified components
 #[derive(Debug)]
 pub struct Query<'a> {
     map: u128,
@@ -14,6 +15,10 @@ pub struct Query<'a> {
 }
 
 /// Result of a [`Query`] with indexes of the found entites and the queried component vecs.
+#[deprecated(
+    since = "0.1.0",
+    note = "This will be removed in 0.2.0 in favor of `QueryEntity`."
+)]
 pub struct QueryResult {
     pub indexes: Vec<usize>,
     pub components: Vec<Vec<Component>>,
@@ -41,6 +46,11 @@ impl<'a> Query<'a> {
     }
 
     /// Run the [`Query`]
+    #[deprecated(
+        since = "0.1.0",
+        note = "This method will be removed in 0.2.0. Please use `run_entity` instead."
+    )]
+    #[allow(deprecated)]
     pub fn run(&self) -> QueryResult {
         let indexes: Vec<usize> = self
             .entities
@@ -67,6 +77,7 @@ impl<'a> Query<'a> {
             components.push(components_to_keep)
         }
 
+        #[allow(deprecated)]
         QueryResult {
             indexes,
             components,
@@ -140,12 +151,15 @@ mod test {
             .unwrap()
             .with_component::<f32>()
             .unwrap();
-
+        #[allow(deprecated)]
         let query_result = query.run();
+        #[allow(deprecated)]
         let u32s = &query_result.components[0];
         dbg!(u32s);
+        #[allow(deprecated)]
         let f32s = &query_result.components[1];
         dbg!(f32s);
+        #[allow(deprecated)]
         let indexes = &query_result.indexes;
         dbg!(indexes);
 

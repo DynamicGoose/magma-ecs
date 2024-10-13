@@ -137,7 +137,28 @@ impl Entities {
         Ok(())
     }
 
-    /// Get a [`Query`] on the [`Entities`]
+    /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
+    /// ```
+    /// use magma_ecs::World;
+    ///
+    /// let mut world = World::new();
+    /// world.register_component::<u32>();
+    ///
+    /// let mut entities = world.entities_write();
+    /// entities.create_entity().with_component(32_u32).unwrap();
+    ///
+    /// let query = entities
+    ///     .query()
+    ///     .with_component::<u32>()
+    ///     .unwrap()
+    ///     .run();
+    ///
+    /// let query = entities
+    ///     .query()
+    ///     .with_component::<u32>()
+    ///     .unwrap()
+    ///     .run_entity();
+    /// ```
     pub fn query(&self) -> Query {
         Query::new(self)
     }

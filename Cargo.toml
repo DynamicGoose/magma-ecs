@@ -1,11 +1,11 @@
 [package]
 name = "magma_ecs"
-version = "0.1.0-alpha.5"
+version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Entity-Component-System for the Magma3D game engine"
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
-repository = "https://github.com/DynamicGoose/mecs"
+repository = "https://github.com/DynamicGoose/magma-ecs"
 
 [dependencies]
 rayon = "1.10.0"
