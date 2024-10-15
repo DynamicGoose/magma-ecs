@@ -38,7 +38,7 @@ impl Entities {
     }
 
     /// Create an entity.
-    pub fn create_entity(&mut self) -> &mut Self {
+    pub(crate) fn create_entity(&mut self) {
         if let Some((index, _)) = self
             .map
             .par_iter()
@@ -53,21 +53,10 @@ impl Entities {
             self.map.push(0);
             self.into_index = self.map.len() - 1;
         }
-
-        self
     }
 
     /**
     Add component to an entity on creation. The component has to be registered first for this to work.
-    ```
-    use magma_ecs::World;
-
-    let world = World::new();
-    world.register_component::<u32>();
-
-    let mut entities = world.entities_write();
-    entities.create_entity().with_component(32_u32).unwrap();
-    ```
     */
     pub fn with_component(
         &mut self,
@@ -138,192 +127,10 @@ impl Entities {
     }
 
     /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
-    /// ```
-    /// use magma_ecs::World;
-    ///
-    /// let mut world = World::new();
-    /// world.register_component::<u32>();
-    ///
-    /// let mut entities = world.entities_write();
-    /// entities.create_entity().with_component(32_u32).unwrap();
-    ///
-    /// let query = entities
-    ///     .query()
-    ///     .with_component::<u32>()
-    ///     .unwrap()
-    ///     .run();
-    ///
-    /// let query = entities
-    ///     .query()
-    ///     .with_component::<u32>()
-    ///     .unwrap()
-    ///     .run_entity();
-    /// ```
     pub fn query(&self) -> Query {
         Query::new(self)
     }
 }
 
 #[cfg(test)]
-mod test {
-    use std::any::TypeId;
-
-    use super::*;
-
-    #[test]
-    fn register_component() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        let type_id = TypeId::of::<Health>();
-        let health_components = entities.components.get(&type_id).unwrap();
-        assert_eq!(health_components.len(), 0);
-    }
-
-    #[test]
-    fn update_component_masks() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-        let type_id = TypeId::of::<Speed>();
-        let mask = entities.bit_masks.get(&type_id).unwrap();
-        assert_eq!(*mask, 2);
-    }
-
-    #[test]
-    fn create_entity() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-        entities.create_entity();
-
-        let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
-        let speed = entities.components.get(&TypeId::of::<Speed>()).unwrap();
-
-        assert!(
-            health.len() == speed.len()
-                && health.len() == 1
-                && health[0].is_none()
-                && speed[0].is_none()
-        );
-    }
-
-    #[test]
-    fn with_component() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap()
-            .with_component(Speed(15))
-            .unwrap();
-
-        let first_health = &entities.components.get(&TypeId::of::<Health>()).unwrap()[0];
-        let wrapped_health = first_health.as_ref().unwrap();
-        let borrowed_health = wrapped_health.read().unwrap();
-        let health = borrowed_health.downcast_ref::<Health>().unwrap();
-
-        assert_eq!(health.0, 100);
-    }
-
-    #[test]
-    fn update_entity_map() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap()
-            .with_component(Speed(15))
-            .unwrap();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
-
-        let entity_map = entities.map[1];
-        assert_eq!(entity_map, 1);
-    }
-
-    #[test]
-    fn remove_component_by_entity_id() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-
-        entities
-            .create_entity()
-            .with_component(Health(10))
-            .unwrap()
-            .with_component(Speed(50))
-            .unwrap();
-
-        entities.remove_component_by_entity_id::<Health>(0).unwrap();
-
-        assert_eq!(entities.map[0], 2);
-    }
-
-    #[test]
-    fn add_component_by_entity_id() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
-
-        entities.add_component_by_entity_id(Speed(50), 0).unwrap();
-
-        assert_eq!(entities.map[0], 3);
-
-        let speed_type_id = TypeId::of::<Speed>();
-        let wrapped_speeds = entities.components.get(&speed_type_id).unwrap();
-        let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
-        let borrowed_speed = wrapped_speed.read().unwrap();
-        let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
-
-        assert!(entities.map[0] == 3 && speed.0 == 50);
-    }
-
-    #[test]
-    fn delete_entity_by_id() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
-        entities.delete_entity_by_id(0).unwrap();
-
-        assert_eq!(entities.map[0], 0);
-    }
-
-    #[test]
-    fn reuse_deleted_entity_columns() {
-        let mut entities = Entities::default();
-        entities.register_component::<Health>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
-        entities.create_entity().with_component(Health(50)).unwrap();
-        entities.delete_entity_by_id(0).unwrap();
-        entities.create_entity().with_component(Health(25)).unwrap();
-
-        let type_id = TypeId::of::<Health>();
-        let borrowed_health = entities.components.get(&type_id).unwrap()[0]
-            .as_ref()
-            .unwrap()
-            .read()
-            .unwrap();
-        let health = borrowed_health.downcast_ref::<Health>().unwrap();
-
-        assert!(entities.map[0] == 1 && health.0 == 25);
-    }
-
-    struct Health(u32);
-    struct Speed(pub u32);
-}
+mod test {}

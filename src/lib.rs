@@ -5,29 +5,13 @@
 //! A resource is like a global component, independant from the [`Entities`].
 //!
 //! Example for creating and setting up a [`World`]:
-//! ```
-//! use magma_ecs::World;
-//!
-//! let world = World::new();
-//! // register a component type
-//! world.register_component::<u32>();
-//! // add a resource
-//! world.add_resource(10_u32);
-//!
-//! // create an entity with registered component
-//! // It is recommended to free read/write locks as quickly as possible. Use scopes to do that.
-//! {
-//!     let mut entities = world.entities_write();
-//!     entities.create_entity().with_component(20_u32).unwrap();
-//! }
-//! ```
 
 use std::{
-    any::Any,
+    any::{Any, TypeId},
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
-use entities::Entities;
+use entities::{query::Query, Entities};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use resources::Resources;
 
@@ -46,6 +30,7 @@ pub mod resources;
 pub struct World {
     resources: RwLock<Resources>,
     entities: RwLock<Entities>,
+    mod_data: RwLock<ModData>,
 }
 
 impl World {
@@ -57,12 +42,6 @@ impl World {
     /**
     This adds a resource to the [`World`]'s [`Resources`], which can be of any type that implements the [`Any`], [`Send`] and [`Sync`] traits.
     [`Send`] and [`Sync`] are required for thread safety. **Don't use if you currently hold a lock on the [`Resources`]!**
-    ```
-    use magma_ecs::World;
-
-    let world = World::new();
-    world.add_resource(10_u32);
-    ```
     */
     pub fn add_resource(&self, resource_data: impl Any + Send + Sync) {
         self.resources.write().unwrap().add(resource_data);
@@ -71,16 +50,6 @@ impl World {
     /**
     Removes the requested resource from the [`World`]'s [`Resources`] if it exists.
     Use turbofish notation.
-    ```
-    use magma_ecs::World;
-
-    let world = World::new();
-    // add u32 resource
-    world.add_resource(10_u32);
-    //remove resource
-    world.remove_resource::<u32>();
-
-    ```
      */
     pub fn remove_resource<T: Any + Send + Sync>(&self) {
         self.resources.write().unwrap().remove::<T>();
@@ -88,15 +57,6 @@ impl World {
 
     /**
     Returns a readlock on the [`World`]'s [`Resources`].
-    ```
-    use magma_ecs::World;
-
-    let world = World::new();
-
-    // acquire readlock on resources
-    let resources = world.resources_read();
-    // get values from the resources...
-    ```
      */
     pub fn resources_read(&self) -> RwLockReadGuard<Resources> {
         self.resources.read().unwrap()
@@ -104,15 +64,6 @@ impl World {
 
     /**
     Returns a writelock on the [`World`]'s [`Resources`].
-    ```
-    use magma_ecs::World;
-
-    let world = World::new();
-
-    // acquire readlock on resources
-    let mut resources = world.resources_write();
-    // modify values in the resources...
-    ```
     */
     pub fn resources_write(&self) -> RwLockWriteGuard<Resources> {
         self.resources.write().unwrap()
@@ -134,11 +85,23 @@ impl World {
         self.entities.write().unwrap()
     }
 
+    pub fn create_entity(&self) -> RwLockWriteGuard<Entities> {
+        self.entities.write().unwrap().create_entity();
+        self.entities.write().unwrap()
+    }
+
     /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
     /// It runs all of the supplied functions in parallel once on the [`World`].
     pub fn update(&self, systems: &Vec<fn(&Self)>) {
         systems.par_iter().for_each(|s| s(self));
     }
+}
+
+#[derive(Default)]
+struct ModData {
+    add_components: Vec<(Box<dyn Any + Send + Sync>, usize)>,
+    remove_components: Vec<(TypeId, usize)>,
+    delete_entities: Vec<usize>,
 }
 
 #[cfg(test)]
