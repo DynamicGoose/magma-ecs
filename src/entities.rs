@@ -38,7 +38,7 @@ impl Entities {
     }
 
     /// Create an entity.
-    pub(crate) fn create_entity(&mut self) {
+    pub(crate) fn create_entity(&mut self) -> &mut Self {
         if let Some((index, _)) = self
             .map
             .par_iter()
@@ -53,6 +53,8 @@ impl Entities {
             self.map.push(0);
             self.into_index = self.map.len() - 1;
         }
+
+        self
     }
 
     /**
