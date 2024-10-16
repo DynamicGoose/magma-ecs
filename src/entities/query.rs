@@ -47,20 +47,23 @@ impl<'a> Query<'a> {
 
     /// Different run method with easier to use API
     pub fn run<R: FnOnce(Vec<QueryEntity>)>(&self, runner: R) {
-        runner(
-            self.entities
-                .map
-                .par_iter()
-                .enumerate()
-                .filter_map(|(index, entity_map)| {
-                    if entity_map & self.map == self.map {
-                        Some(QueryEntity::new(index, self.entities))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        );
+        let entities = self
+            .entities
+            .map
+            .read()
+            .unwrap()
+            .par_iter()
+            .enumerate()
+            .filter_map(|(index, entity_map)| {
+                if entity_map & self.map == self.map {
+                    Some(QueryEntity::new(index, self.entities))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        runner(entities);
     }
 }
 

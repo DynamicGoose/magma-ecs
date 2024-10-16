@@ -1,6 +1,6 @@
 use std::{
     any::{Any, TypeId},
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
 
 use crate::error::EntityError;
@@ -8,7 +8,7 @@ use crate::error::EntityError;
 use super::Entities;
 
 type ExtractedComponents<'a> =
-    Result<&'a Vec<Option<Arc<RwLock<dyn Any + Send + Sync>>>>, EntityError>;
+    Result<RwLockReadGuard<'a, Vec<Option<Arc<RwLock<dyn Any + Send + Sync>>>>>, EntityError>;
 
 /// A query entity with the entities id and a reference to the [`Entities`] struct.
 pub struct QueryEntity<'a> {
@@ -23,10 +23,13 @@ impl<'a> QueryEntity<'a> {
 
     fn extract_components<T: Any + Send + Sync>(&self) -> ExtractedComponents {
         let type_id = TypeId::of::<T>();
-        self.entities
+        Ok(self
+            .entities
             .components
             .get(&type_id)
-            .ok_or(EntityError::ComponentNotInQuery)
+            .ok_or(EntityError::ComponentNotInQuery)?
+            .read()
+            .unwrap())
     }
 
     /// Operate o reference to component
@@ -57,5 +60,20 @@ impl<'a> QueryEntity<'a> {
             .unwrap();
         run(borrowed_component.downcast_mut::<T>().unwrap());
         Ok(())
+    }
+
+    /// Remove specified component from entity
+    pub fn remove_component<T: Any + Send + Sync>(&self) -> Result<(), EntityError> {
+        self.entities.remove_component_by_entity_id::<T>(self.id)
+    }
+
+    /// Add component to entity
+    pub fn add_component(&self, data: impl Any + Send + Sync) -> Result<(), EntityError> {
+        self.entities.add_component_by_entity_id(data, self.id)
+    }
+
+    /// delete this entity. Do the feetus yeetus.
+    pub fn delete(self) {
+        self.entities.delete_entity_by_id(self.id).unwrap();
     }
 }

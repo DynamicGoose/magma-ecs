@@ -29,6 +29,10 @@ fn query() {
                         _test = *data;
                     })
                     .unwrap();
+                entity.remove_component::<u32>().unwrap();
+                entity.add_component(32_u32).unwrap();
+                entity.delete();
+                world.create_entity();
             }
         });
     assert!(bool);

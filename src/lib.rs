@@ -57,7 +57,7 @@ impl World {
         self.entities.register_component::<T>();
     }
 
-    pub fn create_entity(&mut self) -> &mut Entities {
+    pub fn create_entity(&self) -> &Entities {
         self.entities.create_entity()
     }
 
