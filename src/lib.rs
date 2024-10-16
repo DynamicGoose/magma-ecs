@@ -4,7 +4,6 @@
 //! An entity is just an index into the component storage.
 //! A resource is like a global component, independant from the [`Entities`].
 //!
-//! Example for creating and setting up a [`World`]:
 
 use std::any::Any;
 
