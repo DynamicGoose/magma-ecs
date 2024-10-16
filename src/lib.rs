@@ -10,12 +10,12 @@ use std::any::Any;
 use entities::{query::Query, Entities};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use resources::Resources;
+use systems::Systems;
 
 pub mod entities;
 pub mod error;
-mod systems;
-
 pub mod resources;
+pub mod systems;
 
 /// The [`World`] struct holds all the data of our world.
 /// <div class="warning">
@@ -67,9 +67,9 @@ impl World {
 
     /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
     /// It runs all of the supplied functions in parallel once on the [`World`].
-    pub fn update(&mut self, systems: (&Vec<fn(&Self)>, &Vec<fn(&mut Self)>)) {
-        systems.1.iter().for_each(|s| s(self));
-        systems.0.par_iter().for_each(|s| s(self));
+    pub fn update(&mut self, systems: Systems) {
+        systems.mutable.iter().for_each(|s| (s.run)(self));
+        systems.immutable.par_iter().for_each(|s| (s.run)(self));
     }
 }
 
