@@ -1,6 +1,6 @@
 use std::{
     any::{Any, TypeId},
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    sync::{Arc, RwLock},
 };
 
 use crate::error::EntityError;
@@ -29,29 +29,33 @@ impl<'a> QueryEntity<'a> {
             .ok_or(EntityError::ComponentNotInQuery)
     }
 
-    /// Get a readlock on the requested component.
-    pub fn get_component<T: Any + Send + Sync>(
+    /// Operate o reference to component
+    pub fn component_ref<T: Any + Send + Sync, R: FnOnce(&T)>(
         &self,
-    ) -> Result<RwLockReadGuard<dyn Any + Send + Sync>, EntityError> {
+        run: R,
+    ) -> Result<(), EntityError> {
         let components = self.extract_components::<T>()?;
         let borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
             .read()
             .unwrap();
-        Ok(borrowed_component)
+        run(borrowed_component.downcast_ref::<T>().unwrap());
+        Ok(())
     }
 
-    /// Get a writelock on the requested component
-    pub fn get_component_mut<T: Any + Send + Sync>(
+    /// Operate on specified component of entity. Returns error, when component doesn't exist.
+    pub fn component_mut<T: Any + Send + Sync, R: FnOnce(&mut T)>(
         &self,
-    ) -> Result<RwLockWriteGuard<dyn Any + Send + Sync>, EntityError> {
+        run: R,
+    ) -> Result<(), EntityError> {
         let components = self.extract_components::<T>()?;
-        let borrowed_component = components[self.id]
+        let mut borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
             .write()
             .unwrap();
-        Ok(borrowed_component)
+        run(borrowed_component.downcast_mut::<T>().unwrap());
+        Ok(())
     }
 }

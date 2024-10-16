@@ -1,8 +1,3 @@
-use std::{
-    any::{Any, TypeId},
-    borrow::Borrow,
-};
-
 use crate::World;
 
 struct SystemMut {

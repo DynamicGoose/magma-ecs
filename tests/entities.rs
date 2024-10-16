@@ -22,11 +22,13 @@ fn query() {
         .run(|query_entities| {
             bool = !query_entities.is_empty();
             for entity in query_entities {
-                *entity
-                    .get_component_mut::<u32>()
-                    .unwrap()
-                    .downcast_mut::<u32>()
-                    .unwrap() += 2;
+                let mut _test = 2;
+                entity
+                    .component_mut(|data: &mut u32| {
+                        *data += 2;
+                        _test = *data;
+                    })
+                    .unwrap();
             }
         });
     assert!(bool);
