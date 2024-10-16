@@ -32,7 +32,7 @@ fn query() {
                 entity.remove_component::<u32>().unwrap();
                 entity.add_component(32_u32).unwrap();
                 entity.delete();
-                world.create_entity();
+                world.create_entity().with_component(32_u32).unwrap();
             }
         });
     assert!(bool);

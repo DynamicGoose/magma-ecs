@@ -127,7 +127,7 @@ impl Entities {
     }
 
     /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
-    pub fn query(&self) -> Query {
+    pub(crate) fn query(&self) -> Query {
         Query::new(self)
     }
 }
