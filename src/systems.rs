@@ -1,46 +1,71 @@
-use std::sync::{Arc, Condvar, Mutex};
+use dispatcher::Dispatcher;
 
 use crate::World;
 
-pub(crate) struct SystemMut {
-    pub run: fn(&mut World),
-    pub name: &'static str,
-    pub cv: Arc<(Mutex<bool>, Condvar)>,
-}
+pub mod dispatcher;
 
-pub(crate) struct SystemRef {
+#[derive(Clone, PartialEq)]
+pub(crate) struct System {
     pub run: fn(&World),
     pub name: &'static str,
-    pub cv: Arc<(Mutex<bool>, Condvar)>,
+    pub deps: &'static [&'static str],
+}
+
+impl System {
+    fn new(run: fn(&World), name: &'static str, deps: &'static [&'static str]) -> Self {
+        Self { run, name, deps }
+    }
 }
 
 #[derive(Default)]
-pub struct Systems {
-    pub(crate) immutable: Vec<SystemRef>,
-    pub(crate) mutable: Vec<SystemMut>,
-}
+pub struct Systems(pub(crate) Vec<System>);
 
 impl Systems {
     pub fn new() -> Self {
-        Self {
-            immutable: vec![],
-            mutable: vec![],
-        }
+        Self(vec![])
     }
 
-    pub fn add_system_ref(&mut self, system: fn(&World), name: &'static str) {
-        self.immutable.push(SystemRef {
-            run: system,
-            name,
-            cv: Arc::new((Mutex::new(false), Condvar::new())),
-        });
+    pub fn with(
+        mut self,
+        run: fn(&World),
+        name: &'static str,
+        deps: &'static [&'static str],
+    ) -> Self {
+        self.0.push(System::new(run, name, deps));
+        self
     }
 
-    pub fn add_system_mut(&mut self, system: fn(&mut World), name: &'static str) {
-        self.mutable.push(SystemMut {
-            run: system,
-            name,
-            cv: Arc::new((Mutex::new(false), Condvar::new())),
-        });
+    pub fn build_dispatcher(self) -> Dispatcher {
+        Dispatcher::from_systems(self)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::World;
+
+    use super::Systems;
+
+    #[test]
+    fn create_systems() {
+        let systems = Systems::new().with(system_1, "system_1", &[]).with(
+            system_2,
+            "system_2",
+            &["system_1"],
+        );
+        assert_eq!(systems.0[1].name, "system_2");
+    }
+
+    #[test]
+    fn build_dispatcher() {
+        let systems = Systems::new().with(system_1, "system_1", &[]).with(
+            system_2,
+            "system_2",
+            &["system_1"],
+        );
+        systems.build_dispatcher();
+    }
+
+    fn system_1(_: &World) {}
+    fn system_2(_: &World) {}
 }

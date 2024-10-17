@@ -68,8 +68,7 @@ impl World {
     /// This takes a [`Vec`] of references to functions that take a reference to [`World`].
     /// It runs all of the supplied functions in parallel once on the [`World`].
     pub fn update(&mut self, systems: Systems) {
-        systems.mutable.iter().for_each(|s| (s.run)(self));
-        systems.immutable.par_iter().for_each(|s| (s.run)(self));
+        systems.0.par_iter().for_each(|s| (s.run)(self));
     }
 }
 
