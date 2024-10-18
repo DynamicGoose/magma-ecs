@@ -1,6 +1,7 @@
 use std::any::{Any, TypeId};
 
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use roaring::RoaringBitmap;
 
 use crate::error::EntityError;
 
@@ -9,7 +10,7 @@ use super::{query_entity::QueryEntity, Component, Entities};
 /// Used for querying for entities with specified components
 #[derive(Debug)]
 pub struct Query<'a> {
-    map: u128,
+    map: RoaringBitmap,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
 }
@@ -28,7 +29,7 @@ impl<'a> Query<'a> {
     pub fn new(entities: &'a Entities) -> Self {
         Self {
             entities,
-            map: 0,
+            map: RoaringBitmap::new(),
             type_ids: vec![],
         }
     }
@@ -55,7 +56,7 @@ impl<'a> Query<'a> {
             .par_iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {
-                if entity_map & self.map == self.map {
+                if entity_map & &self.map == self.map {
                     Some(QueryEntity::new(index, self.entities))
                 } else {
                     None

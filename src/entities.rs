@@ -13,6 +13,7 @@ use std::{
 
 use query::Query;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use roaring::RoaringBitmap;
 
 use crate::error::EntityError;
 
@@ -22,9 +23,8 @@ pub(crate) type ComponentMap = HashMap<TypeId, RwLock<Vec<Option<Component>>>>;
 #[derive(Debug, Default)]
 pub struct Entities {
     components: ComponentMap,
-    // TODO (0.2.0): Increase bitmask size (bitmaps crate?)
-    bit_masks: HashMap<TypeId, u128>,
-    map: RwLock<Vec<u128>>,
+    bit_masks: HashMap<TypeId, RoaringBitmap>,
+    map: RwLock<Vec<RoaringBitmap>>,
     into_index: RwLock<usize>,
 }
 
@@ -32,20 +32,26 @@ impl Entities {
     pub(crate) fn register_component<T: Any + Send + Sync>(&mut self) {
         let type_id = TypeId::of::<T>();
         self.components.insert(type_id, RwLock::new(vec![]));
-        self.bit_masks.insert(type_id, 1 << self.bit_masks.len());
+        let mut bit_mask = RoaringBitmap::new();
+        bit_mask.insert(1 << self.bit_masks.len());
+        self.bit_masks.insert(type_id, bit_mask);
     }
 
     /// Create an entity.
     pub(crate) fn create_entity(&self) -> &Self {
         {
             let mut map = self.map.write().unwrap();
-            if let Some((index, _)) = map.par_iter().enumerate().find_any(|(_, mask)| **mask == 0) {
+            if let Some((index, _)) = map
+                .par_iter()
+                .enumerate()
+                .find_any(|(_, mask)| mask.is_empty())
+            {
                 *self.into_index.write().unwrap() = index;
             } else {
                 self.components
                     .par_iter()
                     .for_each(|(_key, components)| components.write().unwrap().push(None));
-                map.push(0);
+                map.push(RoaringBitmap::new());
                 *self.into_index.write().unwrap() = map.len() - 1;
             }
         }
@@ -68,7 +74,7 @@ impl Entities {
                 *component = Some(Arc::new(RwLock::new(data)));
 
                 let bit_mask = self.bit_masks.get(&type_id).unwrap();
-                self.map.write().unwrap()[*index] |= *bit_mask;
+                self.map.write().unwrap()[*index] |= bit_mask;
             } else {
                 return Err(EntityError::ComponentNotRegistered);
             }
@@ -77,8 +83,8 @@ impl Entities {
         Ok(self)
     }
 
-    pub(crate) fn get_bitmask(&self, type_id: &TypeId) -> Option<u128> {
-        self.bit_masks.get(type_id).copied()
+    pub(crate) fn get_bitmask(&self, type_id: &TypeId) -> Option<&RoaringBitmap> {
+        self.bit_masks.get(type_id)
     }
 
     pub(crate) fn remove_component_by_entity_id<T: Any + Send + Sync>(
@@ -93,8 +99,8 @@ impl Entities {
         };
 
         let mut map = self.map.write().unwrap();
-        if map[index] & *mask == *mask {
-            map[index] ^= *mask;
+        if &map[index] & mask == *mask {
+            map[index] ^= mask;
         }
         Ok(())
     }
@@ -110,7 +116,7 @@ impl Entities {
         } else {
             return Err(EntityError::ComponentNotRegistered);
         };
-        self.map.write().unwrap()[index] |= *mask;
+        self.map.write().unwrap()[index] |= mask;
 
         let components = self.components.get(&type_id).unwrap();
         components.write().unwrap()[index] = Some(Arc::new(RwLock::new(data)));
@@ -119,7 +125,7 @@ impl Entities {
 
     pub(crate) fn delete_entity_by_id(&self, index: usize) -> Result<(), EntityError> {
         if let Some(map) = self.map.write().unwrap().get_mut(index) {
-            *map = 0;
+            map.clear();
         } else {
             return Err(EntityError::EntityDoesNotExist);
         }
