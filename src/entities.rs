@@ -139,4 +139,168 @@ impl Entities {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn register_component() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        let type_id = TypeId::of::<Health>();
+        let health_components = entities.components.get(&type_id).unwrap();
+        assert_eq!(health_components.read().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn update_component_masks() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        let type_id = TypeId::of::<Speed>();
+        let mask = entities.bit_masks.get(&type_id).unwrap();
+        assert!(mask.contains(2));
+    }
+
+    #[test]
+    fn create_entity() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities.create_entity();
+
+        let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
+        let speed = entities.components.get(&TypeId::of::<Speed>()).unwrap();
+
+        assert_eq!(health.read().unwrap().len(), 1);
+        assert_eq!(speed.read().unwrap().len(), 1);
+        assert!(health.read().unwrap()[0].is_none());
+        assert!(speed.read().unwrap()[0].is_none());
+    }
+
+    #[test]
+    fn entity_with_component() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap()
+            .with_component(Speed(15))
+            .unwrap();
+
+        let health = &entities
+            .components
+            .get(&TypeId::of::<Health>())
+            .unwrap()
+            .read()
+            .unwrap()[0];
+        let health_borrowed = health.as_ref().unwrap().read().unwrap();
+        let health_downcast = health_borrowed.downcast_ref::<Health>().unwrap();
+
+        let speed = &entities
+            .components
+            .get(&TypeId::of::<Speed>())
+            .unwrap()
+            .read()
+            .unwrap()[0];
+        let speed_borrowed = speed.as_ref().unwrap().read().unwrap();
+        let speed_downcast = speed_borrowed.downcast_ref::<Speed>().unwrap();
+        assert_eq!(health_downcast.0, 100);
+        assert_eq!(speed_downcast.0, 15);
+    }
+
+    #[test]
+    fn update_entity_map() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap()
+            .with_component(Speed(15))
+            .unwrap();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+
+        let entity_map = entities.map.read().unwrap();
+        assert!(entity_map[0].contains_range(1..2));
+        assert!(entity_map[1].contains(1));
+    }
+
+    #[test]
+    fn remove_component() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+
+        entities
+            .create_entity()
+            .with_component(Health(10))
+            .unwrap()
+            .with_component(Speed(50))
+            .unwrap();
+
+        entities.remove_component_by_entity_id::<Health>(0).unwrap();
+
+        assert_eq!(entities.map.read().unwrap()[0].min().unwrap(), 2);
+    }
+
+    #[test]
+    fn add_component() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+
+        entities.add_component_by_entity_id(Speed(50), 0).unwrap();
+
+        assert!(entities.map.read().unwrap()[0].contains_range(1..2));
+    }
+
+    #[test]
+    fn delete_entity_by_id() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+        entities.delete_entity_by_id(0).unwrap();
+
+        assert!(entities.map.read().unwrap()[0].is_empty());
+    }
+
+    #[test]
+    fn reuse_deleted_entity_columns() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities
+            .create_entity()
+            .with_component(Health(100))
+            .unwrap();
+        entities.create_entity().with_component(Health(50)).unwrap();
+        entities.delete_entity_by_id(0).unwrap();
+        entities.create_entity().with_component(Health(25)).unwrap();
+
+        let health = &entities
+            .components
+            .get(&TypeId::of::<Health>())
+            .unwrap()
+            .read()
+            .unwrap()[0];
+        let health_borrowed = health.as_ref().unwrap().read().unwrap();
+        let health_downcast = health_borrowed.downcast_ref::<Health>().unwrap();
+        assert!(entities.map.read().unwrap()[0].contains(1));
+        assert_eq!(health_downcast.0, 25);
+    }
+
+    struct Health(u32);
+    struct Speed(u32);
+}

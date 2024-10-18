@@ -38,15 +38,15 @@ impl World {
     This adds a resource to the [`World`]'s [`Resources`], which can be of any type that implements the [`Any`], [`Send`] and [`Sync`] traits.
     [`Send`] and [`Sync`] are required for thread safety. **Don't use if you currently hold a lock on the [`Resources`]!**
     */
-    pub fn add_resource(&mut self, resource_data: impl Any + Send + Sync) {
-        self.resources.add(resource_data);
+    pub fn add_resource(&self, resource_data: impl Any + Send + Sync) -> Result<(), ResourceError> {
+        self.resources.add(resource_data)
     }
 
     /**
     Removes the requested resource from the [`World`]'s [`Resources`] if it exists.
     Use turbofish notation.
      */
-    pub fn remove_resource<T: Any + Send + Sync>(&mut self) {
+    pub fn remove_resource<T: Any + Send + Sync>(&self) {
         self.resources.remove::<T>();
     }
 
@@ -78,6 +78,3 @@ impl World {
         self.entities.query()
     }
 }
-
-#[cfg(test)]
-mod tests {}

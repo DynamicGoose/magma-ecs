@@ -16,4 +16,5 @@ pub enum EntityError {
 #[derive(Debug)]
 pub enum ResourceError {
     ResourceDoesNotExist,
+    ResourceAlreadyPresent,
 }

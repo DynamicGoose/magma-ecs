@@ -5,7 +5,7 @@ use roaring::RoaringBitmap;
 
 use crate::error::EntityError;
 
-use super::{query_entity::QueryEntity, Component, Entities};
+use super::{query_entity::QueryEntity, Entities};
 
 /// Used for querying for entities with specified components
 #[derive(Debug)]
@@ -13,16 +13,6 @@ pub struct Query<'a> {
     map: RoaringBitmap,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
-}
-
-/// Result of a [`Query`] with indexes of the found entites and the queried component vecs.
-#[deprecated(
-    since = "0.1.0",
-    note = "This will be removed in 0.2.0 in favor of `QueryEntity`."
-)]
-pub struct QueryResult {
-    pub indexes: Vec<usize>,
-    pub components: Vec<Vec<Component>>,
 }
 
 impl<'a> Query<'a> {
@@ -69,4 +59,56 @@ impl<'a> Query<'a> {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn query_with_component() {
+        let mut entities = Entities::default();
+        entities.register_component::<u32>();
+        entities.register_component::<f32>();
+        let mut query = Query::new(&entities);
+        query
+            .with_component::<u32>()
+            .unwrap()
+            .with_component::<f32>()
+            .unwrap();
+
+        assert!(query.map.contains_range(1..2));
+        assert_eq!(TypeId::of::<u32>(), query.type_ids[0]);
+        assert_eq!(TypeId::of::<f32>(), query.type_ids[1]);
+    }
+
+    #[test]
+    fn run_query() {
+        let mut entities = Entities::default();
+        entities.register_component::<u32>();
+        entities.register_component::<f32>();
+        entities
+            .create_entity()
+            .with_component(10_u32)
+            .unwrap()
+            .with_component(20.0_f32)
+            .unwrap();
+        entities.create_entity().with_component(5_u32).unwrap();
+        entities.create_entity().with_component(20.0_f32).unwrap();
+        entities
+            .create_entity()
+            .with_component(15_u32)
+            .unwrap()
+            .with_component(25.0_f32)
+            .unwrap();
+
+        Query::new(&entities)
+            .with_component::<u32>()
+            .unwrap()
+            .with_component::<f32>()
+            .unwrap()
+            .run(|entities| {
+                assert_eq!(entities.len(), 2);
+                entities[0]
+                    .component_ref(|comp: &u32| assert!(*comp == 10 || *comp == 15))
+                    .unwrap()
+            });
+    }
+}
