@@ -1,8 +1,5 @@
-//! Provides the [`Entities`] struct as well as [`query`] and [`query_entity`] modules.
-
-/// Basic query functionality
 pub mod query;
-/// Easier to use query API
+/// Output of running a [`Query`]
 pub mod query_entity;
 
 use std::{
@@ -37,7 +34,6 @@ impl Entities {
         self.bit_masks.insert(type_id, bit_mask);
     }
 
-    /// Create an entity.
     pub(crate) fn create_entity(&self) -> &Self {
         {
             let mut map = self.map.write().unwrap();
@@ -59,9 +55,7 @@ impl Entities {
         self
     }
 
-    /**
-    Add component to an entity on creation. The component has to be registered first for this to work.
-    */
+    /// Add component to an entity on creation. The component has to be registered first.
     pub fn with_component(&self, data: impl Any + Send + Sync) -> Result<&Self, EntityError> {
         let type_id = data.type_id();
         {
@@ -132,7 +126,6 @@ impl Entities {
         Ok(())
     }
 
-    /// Query for entities with specified components. Use either `run()` to get a `QueryResult` or `run_entity` to get a `Vec` of `QueryEntity`.
     pub(crate) fn query(&self) -> Query {
         Query::new(self)
     }

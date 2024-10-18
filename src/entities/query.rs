@@ -16,7 +16,7 @@ pub struct Query<'a> {
 }
 
 impl<'a> Query<'a> {
-    pub fn new(entities: &'a Entities) -> Self {
+    pub(crate) fn new(entities: &'a Entities) -> Self {
         Self {
             entities,
             map: RoaringBitmap::new(),
@@ -36,7 +36,21 @@ impl<'a> Query<'a> {
         Ok(self)
     }
 
-    /// Different run method with easier to use API
+    /// Run the [`Query`]. This takes a closure to be run on the output, which is a `Vec<[`QueryEntity`]>`.
+    /// ```
+    /// use magma_ecs::World;
+    ///
+    /// let mut world = World::new();
+    /// world.register_component::<u32>();
+    /// world.create_entity().with_component(20_u32).unwrap();
+    ///
+    /// world.query()
+    ///     .with_component::<u32>()
+    ///     .unwrap()
+    ///     .run(|entities| {
+    ///         // do something with the entities
+    ///     });
+    /// ```
     pub fn run<R: FnOnce(Vec<QueryEntity>)>(&self, runner: R) {
         let entities = self
             .entities

@@ -17,7 +17,7 @@ pub struct QueryEntity<'a> {
 }
 
 impl<'a> QueryEntity<'a> {
-    pub fn new(id: usize, entities: &'a Entities) -> Self {
+    pub(crate) fn new(id: usize, entities: &'a Entities) -> Self {
         Self { id, entities }
     }
 
