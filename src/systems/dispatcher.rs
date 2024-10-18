@@ -8,9 +8,11 @@ use super::{System, Systems};
 pub struct Dispatcher(Vec<Vec<fn(&World)>>);
 
 impl Dispatcher {
+    /// A system can't have shared dependencies with systems it depends on (the shared dependency is already guaranteed to have executed because of the other dependency).
+    /// This function will lock when this happends. Improve in the future?
     pub(crate) fn from_systems(mut systems: Systems) -> Self {
         let mut in_dispatcher: Vec<System> = vec![];
-        let mut dispatcher = Dispatcher::default();
+        let mut dispatcher = Self::default();
         let mut stage: Vec<System>;
 
         while !systems.0.is_empty() {
@@ -46,9 +48,7 @@ impl Dispatcher {
     pub fn dispatch(&self, world: &World) {
         self.0.iter().for_each(|systems| {
             systems.par_iter().for_each(|system| {
-                println!("executing");
                 (system)(world);
-                println!("executed");
             })
         });
     }

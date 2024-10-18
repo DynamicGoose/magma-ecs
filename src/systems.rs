@@ -1,4 +1,4 @@
-use dispatcher::Dispatcher;
+pub use dispatcher::Dispatcher;
 
 use crate::World;
 
