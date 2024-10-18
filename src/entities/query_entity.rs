@@ -32,7 +32,7 @@ impl<'a> QueryEntity<'a> {
             .unwrap())
     }
 
-    /// Operate o reference to component
+    /// Operate on reference to component
     pub fn component_ref<T: Any + Send + Sync, R: FnOnce(&T)>(
         &self,
         run: R,

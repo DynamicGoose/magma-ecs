@@ -8,6 +8,7 @@
 use std::any::Any;
 
 use entities::{query::Query, Entities};
+use error::ResourceError;
 use resources::Resources;
 
 pub mod entities;
@@ -47,6 +48,20 @@ impl World {
      */
     pub fn remove_resource<T: Any + Send + Sync>(&mut self) {
         self.resources.remove::<T>();
+    }
+
+    pub fn resource_ref<T: Any + Send + Sync, R: FnOnce(&T)>(
+        &self,
+        run: R,
+    ) -> Result<(), ResourceError> {
+        self.resources.resource_ref(run)
+    }
+
+    pub fn resource_mut<T: Any + Send + Sync, R: FnOnce(&mut T)>(
+        &self,
+        run: R,
+    ) -> Result<(), ResourceError> {
+        self.resources.resource_mut(run)
     }
 
     /// Register a component.
