@@ -9,3 +9,4 @@ repository = "https://github.com/DynamicGoose/magma-ecs"
 
 [dependencies]
 rayon = "1.10.0"
+roaring = "0.10.6"

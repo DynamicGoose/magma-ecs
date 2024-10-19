@@ -12,3 +12,9 @@ pub enum EntityError {
     /// attemted downcasting to wrong type
     DowncastToWrongType,
 }
+
+#[derive(Debug)]
+pub enum ResourceError {
+    ResourceDoesNotExist,
+    ResourceAlreadyPresent,
+}
