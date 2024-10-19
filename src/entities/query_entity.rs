@@ -32,7 +32,7 @@ impl<'a> QueryEntity<'a> {
             .unwrap())
     }
 
-    /// Operate on reference to component
+    /// Operate on reference to component. Returns an error if the component doesn't exist.
     pub fn component_ref<T: Any + Send + Sync, R: FnOnce(&T)>(
         &self,
         run: R,
@@ -47,7 +47,7 @@ impl<'a> QueryEntity<'a> {
         Ok(())
     }
 
-    /// Operate on specified component of entity. Returns error, when component doesn't exist.
+    /// Operate on mutable reference to component. Returns an error if component doesn't exist.
     pub fn component_mut<T: Any + Send + Sync, R: FnOnce(&mut T)>(
         &self,
         run: R,
@@ -72,7 +72,7 @@ impl<'a> QueryEntity<'a> {
         self.entities.add_component_by_entity_id(data, self.id)
     }
 
-    /// delete this entity. Do the feetus yeetus.
+    /// Delete this entity
     pub fn delete(self) {
         self.entities.delete_entity_by_id(self.id).unwrap();
     }

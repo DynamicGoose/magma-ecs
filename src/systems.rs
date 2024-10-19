@@ -1,7 +1,8 @@
-pub use dispatcher::Dispatcher;
+use dispatcher::Dispatcher;
 
 use crate::World;
 
+/// The [`Dispatcher`] is used to dispatch [`Systems`] in parallel on a [`World`].
 pub mod dispatcher;
 
 #[derive(Clone, PartialEq)]
@@ -17,6 +18,7 @@ impl System {
     }
 }
 
+/// Holds systems and their dependencies
 #[derive(Default)]
 pub struct Systems(pub(crate) Vec<System>);
 
@@ -25,6 +27,10 @@ impl Systems {
         Self(vec![])
     }
 
+    /// Add a system on creation.
+    /// **run:** the system's function,
+    /// **name:** the system's name,
+    /// **deps:** the system's dependencies,
     pub fn with(
         mut self,
         run: fn(&World),
@@ -35,6 +41,7 @@ impl Systems {
         self
     }
 
+    /// Build a [`Dispatcher`] from the [`Systems`] to be run on the [`World`].
     pub fn build_dispatcher(self) -> Dispatcher {
         Dispatcher::from_systems(self)
     }

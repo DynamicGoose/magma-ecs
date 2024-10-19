@@ -2,7 +2,7 @@
 //!
 //! The crate provides a [`World`] struct with [`Resources`] and [`Entities`].
 //! An entity is just an index into the component storage.
-//! A resource is like a global component, independant from the [`Entities`].
+//! A resource is like a global component, independent of the [`Entities`].
 //!
 //! Example for creating and setting up a [`World`]:
 //! ```
@@ -27,13 +27,13 @@ use entities::{query::Query, Entities};
 use error::ResourceError;
 use resources::Resources;
 
-/// Provides the [`Entities`] struct as well as [`query`] and [`query_entity`] modules.
+/// Provides the [`Entities`] struct as well as [`query`](entities::query) and [`query_entity`](entities::query_entity) modules.
 pub mod entities;
 /// Error types
 pub mod error;
 /// Provides the [`Resources`] struct.
 pub mod resources;
-/// Provides the [`Systems`] struct, from which a [`Dispatcher`] can be created.
+/// Provides the [`Systems`](systems::Systems) struct, from which a [`Dispatcher`](systems::dispatcher::Dispatcher) can be created.
 pub mod systems;
 
 /// The [`World`] struct holds all the data of our world.

@@ -4,12 +4,13 @@ use crate::World;
 
 use super::{System, Systems};
 
+/// Used to [`dispatch`] [`Systems`] on a [`World`] in parallel
 #[derive(Default)]
 pub struct Dispatcher(Vec<Vec<fn(&World)>>);
 
 impl Dispatcher {
     /// A system can't have shared dependencies with systems it depends on (the shared dependency is already guaranteed to have executed because of the other dependency).
-    /// This function will lock when this happends. Improve in the future?
+    /// This function will lock when this happends. Will be improved in the future!
     pub(crate) fn from_systems(mut systems: Systems) -> Self {
         let mut in_dispatcher: Vec<System> = vec![];
         let mut dispatcher = Self::default();
@@ -45,6 +46,22 @@ impl Dispatcher {
         dispatcher
     }
 
+    /// Dispatch on a [`World`].
+    /// ```
+    /// use magma_ecs::{systems::Systems, World};
+    ///
+    /// let world = World::new();
+    ///
+    /// let dispatcher = Systems::new()
+    ///     .with(example_system, "example_system", &[])
+    ///     .build_dispatcher();
+    ///
+    /// dispatcher.dispatch(&world);
+    ///
+    ///
+    /// fn example_system(_: &World) {
+    ///     // ...
+    /// }
     pub fn dispatch(&self, world: &World) {
         self.0.iter().for_each(|systems| {
             systems.par_iter().for_each(|system| {
