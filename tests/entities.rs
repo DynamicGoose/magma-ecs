@@ -1,4 +1,4 @@
-use magma_ecs::{entities, World};
+use magma_ecs::World;
 
 #[test]
 fn create_entity() {
