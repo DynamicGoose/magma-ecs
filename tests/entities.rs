@@ -1,4 +1,4 @@
-use magma_ecs::World;
+use magma_ecs::{entities, World};
 
 #[test]
 fn create_entity() {
@@ -36,4 +36,45 @@ fn query() {
             }
         });
     assert!(bool);
+}
+
+#[test]
+fn inner_lock() {
+    let mut world = World::new();
+    world.register_component::<u32>();
+    world.register_component::<f32>();
+    world
+        .create_entity()
+        .with_component(32_u32)
+        .unwrap()
+        .with_component(64_f32)
+        .unwrap();
+
+    world
+        .query()
+        .with_component::<u32>()
+        .unwrap()
+        .run(|entities| {
+            for entity in entities {
+                world
+                    .query()
+                    .with_component::<f32>()
+                    .unwrap()
+                    .run(|entities_2| {
+                        for entity_2 in entities_2 {
+                            entity_2
+                                .component_mut(|comp_mut: &mut f32| {
+                                    entity
+                                        .component_ref(|comp_ref: &u32| {
+                                            if *comp_ref < *comp_mut as u32 {
+                                                *comp_mut += 1.0;
+                                            }
+                                        })
+                                        .unwrap();
+                                })
+                                .unwrap();
+                        }
+                    });
+            }
+        });
 }
