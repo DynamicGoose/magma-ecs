@@ -19,7 +19,7 @@ impl System {
 }
 
 /// Holds systems and their dependencies
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Systems(pub(crate) Vec<System>);
 
 impl Systems {
