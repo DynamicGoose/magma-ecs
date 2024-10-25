@@ -41,6 +41,17 @@ impl Systems {
         self
     }
 
+    /// Add a system
+    pub fn add(
+        &mut self,
+        run: fn(&World),
+        name: &'static str,
+        deps: &'static [&'static str],
+    ) -> &mut Self {
+        self.0.push(System::new(run, name, deps));
+        self
+    }
+
     /// Build a [`Dispatcher`] from the [`Systems`] to be run on the [`World`].
     pub fn build_dispatcher(self) -> Dispatcher {
         Dispatcher::from_systems(self)
@@ -61,6 +72,14 @@ mod tests {
             &["system_1"],
         );
         assert_eq!(systems.0[1].name, "system_2");
+    }
+
+    #[test]
+    fn add_systems() {
+        let mut systems = Systems::new();
+        systems
+            .add(system_1, "system_1", &[])
+            .add(system_2, "system_2", &["system_1"]);
     }
 
     #[test]
