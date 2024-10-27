@@ -44,6 +44,7 @@ fn system_2(world: &World) {
     world.create_entity().with_component(2_u32).unwrap();
 }
 fn system_3(world: &World) {
+    world.create_entity().with_component(3_u32).unwrap();
     world
         .query()
         .with_component::<u32>()
@@ -53,7 +54,6 @@ fn system_3(world: &World) {
                 .iter()
                 .for_each(|entity| entity.component_mut(|comp: &mut u32| *comp += 1).unwrap())
         });
-    world.create_entity().with_component(3_u32).unwrap();
 }
 fn system_4(world: &World) {
     world.create_entity().with_component(4_u32).unwrap();

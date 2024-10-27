@@ -56,7 +56,6 @@ impl<'a> Query<'a> {
             .entities
             .map
             .read()
-            .unwrap()
             .par_iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {

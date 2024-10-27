@@ -1,6 +1,7 @@
+use parking_lot::{RwLock, RwLockReadGuard};
 use std::{
     any::{Any, TypeId},
-    sync::{Arc, RwLock, RwLockReadGuard},
+    sync::Arc,
 };
 
 use crate::error::EntityError;
@@ -28,8 +29,7 @@ impl<'a> QueryEntity<'a> {
             .components
             .get(&type_id)
             .ok_or(EntityError::ComponentNotInQuery)?
-            .read()
-            .unwrap())
+            .read())
     }
 
     /// Operate on reference to component. Returns an error if the component doesn't exist.
@@ -41,8 +41,7 @@ impl<'a> QueryEntity<'a> {
         let borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
-            .read()
-            .unwrap();
+            .read();
         run(borrowed_component.downcast_ref::<T>().unwrap());
         Ok(())
     }
@@ -56,8 +55,7 @@ impl<'a> QueryEntity<'a> {
         let mut borrowed_component = components[self.id]
             .as_ref()
             .ok_or(EntityError::ComponentDataDoesNotExist)?
-            .write()
-            .unwrap();
+            .write();
         run(borrowed_component.downcast_mut::<T>().unwrap());
         Ok(())
     }

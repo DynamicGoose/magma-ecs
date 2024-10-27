@@ -1,7 +1,8 @@
+use parking_lot::RwLock;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
 use crate::error::ResourceError;
@@ -13,10 +14,9 @@ pub struct Resources {
 
 impl Resources {
     pub(crate) fn add(&self, data: impl Any + Send + Sync) -> Result<(), ResourceError> {
-        if !self.data.read().unwrap().contains_key(&data.type_id()) {
+        if !self.data.read().contains_key(&data.type_id()) {
             self.data
                 .write()
-                .unwrap()
                 .insert(data.type_id(), Arc::new(RwLock::new(data)));
             Ok(())
         } else {
@@ -29,8 +29,8 @@ impl Resources {
         run: R,
     ) -> Result<(), ResourceError> {
         let type_id = TypeId::of::<T>();
-        if let Some(data) = self.data.read().unwrap().get(&type_id) {
-            run(data.read().unwrap().downcast_ref().unwrap());
+        if let Some(data) = self.data.read().get(&type_id) {
+            run(data.read().downcast_ref().unwrap());
             Ok(())
         } else {
             Err(ResourceError::ResourceDoesNotExist)
@@ -42,8 +42,8 @@ impl Resources {
         run: R,
     ) -> Result<(), ResourceError> {
         let type_id = TypeId::of::<T>();
-        if let Some(data) = self.data.read().unwrap().get(&type_id) {
-            run(data.write().unwrap().downcast_mut().unwrap());
+        if let Some(data) = self.data.read().get(&type_id) {
+            run(data.write().downcast_mut().unwrap());
             Ok(())
         } else {
             Err(ResourceError::ResourceDoesNotExist)
@@ -52,7 +52,7 @@ impl Resources {
 
     pub(crate) fn remove<T: Any>(&self) {
         let type_id = TypeId::of::<T>();
-        self.data.write().unwrap().remove(&type_id);
+        self.data.write().remove(&type_id);
     }
 }
 
@@ -76,11 +76,7 @@ mod test {
         let resources = Resources::default();
         resources.add(10_u32).unwrap();
         resources.remove::<u32>();
-        assert!(!resources
-            .data
-            .read()
-            .unwrap()
-            .contains_key(&TypeId::of::<u32>()));
+        assert!(!resources.data.read().contains_key(&TypeId::of::<u32>()));
     }
 
     #[test]
