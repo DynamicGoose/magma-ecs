@@ -36,40 +36,35 @@ impl Entities {
         self.bit_masks.insert(type_id, bit_mask);
     }
 
-    pub(crate) fn create_entity(&self) -> &Self {
+    pub(crate) fn create_entity(&self) -> EntitiesWithIntoIndex {
+        let mut map = self.map.write();
+        if let Some((index, _)) = map
+            .par_iter()
+            .enumerate()
+            .find_any(|(_, mask)| mask.is_empty())
         {
-            let mut map = self.map.write();
-            if let Some((index, _)) = map
+            EntitiesWithIntoIndex(self, index)
+        } else {
+            self.components
                 .par_iter()
-                .enumerate()
-                .find_any(|(_, mask)| mask.is_empty())
-            {
-                *self.into_index.write() = index;
-            } else {
-                self.components
-                    .par_iter()
-                    .for_each(|(_key, components)| components.write().push(None));
-                map.push(RoaringBitmap::new());
-                *self.into_index.write() = map.len() - 1;
-            }
+                .for_each(|(_key, components)| components.write().push(None));
+            map.push(RoaringBitmap::new());
+            EntitiesWithIntoIndex(self, map.len() - 1)
         }
-
-        self
     }
 
     /// Add component to an entity on creation. The component has to be registered first.
     pub fn with_component(&self, data: impl Any + Send + Sync) -> Result<&Self, EntityError> {
         let type_id = data.type_id();
-        let index = self.into_index.read();
         if let Some(components) = self.components.get(&type_id) {
             let mut components = components.write();
             let component = components
-                .get_mut(*index)
+                .get_mut(*self.into_index.read())
                 .ok_or(EntityError::ComponentNotRegistered)?;
             *component = Some(Arc::new(RwLock::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
-            self.map.write()[*index] |= bit_mask;
+            self.map.write()[*self.into_index.read()] |= bit_mask;
         } else {
             return Err(EntityError::ComponentNotRegistered);
         }
@@ -128,6 +123,28 @@ impl Entities {
 
     pub(crate) fn query(&self) -> Query {
         Query::new(self)
+    }
+}
+
+pub struct EntitiesWithIntoIndex<'a>(&'a Entities, usize);
+
+impl<'a> EntitiesWithIntoIndex<'a> {
+    pub fn with_component(&self, data: impl Any + Send + Sync) -> Result<&Self, EntityError> {
+        let type_id = data.type_id();
+        if let Some(components) = self.0.components.get(&type_id) {
+            let mut components = components.write();
+            let component = components
+                .get_mut(self.1)
+                .ok_or(EntityError::ComponentNotRegistered)?;
+            *component = Some(Arc::new(RwLock::new(data)));
+
+            let bit_mask = self.0.bit_masks.get(&type_id).unwrap();
+            self.0.map.write()[self.1] |= bit_mask;
+        } else {
+            return Err(EntityError::ComponentNotRegistered);
+        }
+
+        Ok(self)
     }
 }
 

@@ -23,7 +23,7 @@
 
 use std::any::Any;
 
-use entities::{query::Query, Entities};
+use entities::{query::Query, Entities, EntitiesWithIntoIndex};
 use error::ResourceError;
 use resources::Resources;
 
@@ -104,7 +104,7 @@ impl World {
     }
 
     /// Spawn an entity
-    pub fn create_entity(&self) -> &Entities {
+    pub fn create_entity(&self) -> EntitiesWithIntoIndex {
         self.entities.create_entity()
     }
 
