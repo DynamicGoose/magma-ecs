@@ -9,10 +9,6 @@ pub trait ComponentSet {
     fn for_components<R: FnMut(TypeId, Arc<RwLock<dyn Any + Send + Sync>>)>(self, run: R);
 }
 
-impl ComponentSet for () {
-    fn for_components<R: FnMut(TypeId, Arc<RwLock<dyn Any + Send + Sync>>)>(self, _run: R) {}
-}
-
 impl<C0> ComponentSet for (C0,)
 where
     C0: Any + Send + Sync,

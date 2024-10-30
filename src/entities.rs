@@ -159,14 +159,14 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities.create_entity(()).unwrap();
+        entities.create_entity((Health(100),)).unwrap();
 
         let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
         let speed = entities.components.get(&TypeId::of::<Speed>()).unwrap();
 
         assert_eq!(health.read().len(), 1);
         assert_eq!(speed.read().len(), 1);
-        assert!(health.read()[0].is_none());
+        assert!(health.read()[0].is_some());
         assert!(speed.read()[0].is_none());
     }
 
