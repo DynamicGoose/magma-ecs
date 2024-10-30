@@ -51,7 +51,6 @@ fn dispatcher() {
             entities[0]
                 .component_ref(|component: &u32| assert_eq!(*component, 2))
                 .unwrap();
-            println!("{:?}", entities);
             entities[3]
                 .component_ref(|component: &u32| assert_eq!(*component, 4))
                 .unwrap();
