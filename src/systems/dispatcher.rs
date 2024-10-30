@@ -133,10 +133,10 @@ mod tests {
     }
 
     fn system_1(world: &World) {
-        world.create_entity().with_component(1_u32).unwrap();
+        world.create_entity((1_u32,)).unwrap();
     }
     fn system_2(world: &World) {
-        world.create_entity().with_component(2_u32).unwrap();
+        world.create_entity((2_u32,)).unwrap();
     }
     fn system_3(world: &World) {
         world
@@ -148,9 +148,9 @@ mod tests {
                     .iter()
                     .for_each(|entity| entity.component_mut(|comp: &mut u32| *comp += 1).unwrap())
             });
-        world.create_entity().with_component(3_u32).unwrap();
+        world.create_entity((3_u32,)).unwrap();
     }
     fn system_4(world: &World) {
-        world.create_entity().with_component(4_u32).unwrap();
+        world.create_entity((4_u32,)).unwrap();
     }
 }

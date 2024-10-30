@@ -12,6 +12,7 @@ type ExtractedComponents<'a> =
     Result<RwLockReadGuard<'a, Vec<Option<Arc<RwLock<dyn Any + Send + Sync>>>>>, EntityError>;
 
 /// A query entity with the entities id and a reference to the [`Entities`] struct.
+#[derive(Debug)]
 pub struct QueryEntity<'a> {
     pub id: usize,
     entities: &'a Entities,

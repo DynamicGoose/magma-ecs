@@ -8,6 +8,6 @@ homepage = "https://dynamicgoose.github.io/magma3d-engine/"
 repository = "https://github.com/DynamicGoose/magma-ecs"
 
 [dependencies]
-parking_lot = "0.12.3"
+parking_lot = { version = "0.12.3", features = ["deadlock_detection"] }
 rayon = "1.10.0"
 roaring = "0.10.6"

@@ -11,6 +11,27 @@ fn create_systems() {
 
 #[test]
 fn dispatcher() {
+    use parking_lot::deadlock;
+    use std::thread;
+    use std::time::Duration;
+
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_secs(2));
+        let deadlocks = deadlock::check_deadlock();
+        if deadlocks.is_empty() {
+            continue;
+        }
+
+        println!("{} deadlocks detected", deadlocks.len());
+        for (i, threads) in deadlocks.iter().enumerate() {
+            println!("Deadlock #{}", i);
+            for t in threads {
+                println!("Thread Id {:#?}", t.thread_id());
+                println!("{:#?}", t.backtrace());
+            }
+        }
+    });
+
     let mut world = World::new();
     world.register_component::<u32>();
 
@@ -38,13 +59,13 @@ fn dispatcher() {
 
 // test systems
 fn system_1(world: &World) {
-    world.create_entity().with_component(1_u32).unwrap();
+    world.create_entity((1_u32,)).unwrap();
 }
 fn system_2(world: &World) {
-    world.create_entity().with_component(2_u32).unwrap();
+    world.create_entity((2_u32,)).unwrap();
 }
 fn system_3(world: &World) {
-    world.create_entity().with_component(3_u32).unwrap();
+    world.create_entity((3_u32,)).unwrap();
     world
         .query()
         .with_component::<u32>()
@@ -56,5 +77,5 @@ fn system_3(world: &World) {
         });
 }
 fn system_4(world: &World) {
-    world.create_entity().with_component(4_u32).unwrap();
+    world.create_entity((4_u32,)).unwrap();
 }
