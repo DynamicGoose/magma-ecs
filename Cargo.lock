@@ -154,7 +154,7 @@ dependencies = [
 
 [[package]]
 name = "magma_ecs"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "parking_lot",
  "rayon",
