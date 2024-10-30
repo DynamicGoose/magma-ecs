@@ -103,7 +103,19 @@ impl World {
         self.entities.register_component::<T>();
     }
 
-    /// Spawn an entity
+    /// Spawn an entity with components. Currently the max size for tuples provided to this method is 10.
+    /// ```
+    /// use magma_ecs::World;
+    ///
+    /// let mut world = World::new();
+    /// world.register_component::<u32>();
+    /// world.register_component::<f32>();
+    ///
+    /// // spawn entity
+    /// world.create_entity((30_u32, 60_f32)).unwrap();
+    /// // when only adding one component, put a comma after it for rust to recognise it as a tuple
+    /// world.create_entity((20_u32,)).unwrap();
+    /// ```
     pub fn create_entity(&self, components: impl ComponentSet) -> Result<(), EntityError> {
         self.entities.create_entity(components)
     }
