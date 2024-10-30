@@ -18,7 +18,7 @@
 //! world.add_resource(10_u32);
 //!
 //! // create an entity with registered component
-//! world.create_entity().with_component(20_u32).unwrap();
+//! world.create_entity((20_u32,)).unwrap();
 //! ```
 
 use std::any::Any;

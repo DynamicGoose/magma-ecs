@@ -28,7 +28,7 @@ impl<'a> Query<'a> {
     pub fn with_component<T: Any>(&mut self) -> Result<&mut Self, EntityError> {
         let type_id = TypeId::of::<T>();
         if let Some(bit_mask) = self.entities.get_bitmask(&type_id) {
-            self.map |= bit_mask;
+            self.map.insert(*bit_mask);
             self.type_ids.push(type_id);
         } else {
             return Err(EntityError::ComponentNotRegistered);
@@ -42,7 +42,7 @@ impl<'a> Query<'a> {
     ///
     /// let mut world = World::new();
     /// world.register_component::<u32>();
-    /// world.create_entity().with_component(20_u32).unwrap();
+    /// world.create_entity((20_u32,)).unwrap();
     ///
     /// world.query()
     ///     .with_component::<u32>()
@@ -59,7 +59,7 @@ impl<'a> Query<'a> {
             .par_iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {
-                if entity_map & &self.map == self.map {
+                if self.map.is_subset(entity_map) {
                     Some(QueryEntity::new(index, self.entities))
                 } else {
                     None
@@ -97,7 +97,7 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<u32>();
         entities.register_component::<f32>();
-        entities.create_entity((10_u32,)).unwrap();
+        entities.create_entity((10_u32, 20.0_f32)).unwrap();
         entities.create_entity((5_u32,)).unwrap();
         entities.create_entity((20.0_f32,)).unwrap();
         entities.create_entity((15_u32, 25.0_f32)).unwrap();
