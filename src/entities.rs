@@ -1,7 +1,9 @@
+pub mod component_set;
 pub mod query;
 /// Output of running a [`Query`]
 pub mod query_entity;
 
+use component_set::ComponentSet;
 use parking_lot::RwLock;
 
 use std::{
@@ -24,7 +26,6 @@ pub struct Entities {
     components: ComponentMap,
     bit_masks: HashMap<TypeId, RoaringBitmap>,
     map: RwLock<Vec<RoaringBitmap>>,
-    into_index: RwLock<usize>,
 }
 
 impl Entities {
@@ -36,40 +37,46 @@ impl Entities {
         self.bit_masks.insert(type_id, bit_mask);
     }
 
-    pub(crate) fn create_entity(&self) -> EntitiesWithIntoIndex {
+    pub(crate) fn create_entity(&self, components: impl ComponentSet) -> Result<(), EntityError> {
         let mut map = self.map.write();
+        let mut result = Ok(());
         if let Some((index, _)) = map
             .par_iter()
             .enumerate()
             .find_any(|(_, mask)| mask.is_empty())
         {
-            EntitiesWithIntoIndex(self, index)
+            components.for_components(|type_id, component| {
+                let component_mask = if let Some(component_mask) = self.bit_masks.get(&type_id) {
+                    component_mask
+                } else {
+                    result = Err(EntityError::ComponentNotRegistered);
+                    return;
+                };
+                map[index] |= component_mask;
+                let component_vec = self.components.get(&type_id).unwrap();
+                component_vec.write()[index] = Some(component);
+            });
+            result
         } else {
             self.components
                 .par_iter()
-                .for_each(|(_key, components)| components.write().push(None));
-            map.push(RoaringBitmap::new());
-            EntitiesWithIntoIndex(self, map.len() - 1)
+                .for_each(|(_, components)| components.write().push(None));
+            map.push(RoaringBitmap::from_sorted_iter(0..1).unwrap());
+
+            let index = map.len() - 1;
+            components.for_components(|type_id, component| {
+                let component_mask = if let Some(component_mask) = self.bit_masks.get(&type_id) {
+                    component_mask
+                } else {
+                    result = Err(EntityError::ComponentNotRegistered);
+                    return;
+                };
+                map[index] |= component_mask;
+                let component_vec = self.components.get(&type_id).unwrap();
+                component_vec.write()[index] = Some(component);
+            });
+            result
         }
-    }
-
-    /// Add component to an entity on creation. The component has to be registered first.
-    pub fn with_component(&self, data: impl Any + Send + Sync) -> Result<&Self, EntityError> {
-        let type_id = data.type_id();
-        if let Some(components) = self.components.get(&type_id) {
-            let mut components = components.write();
-            let component = components
-                .get_mut(*self.into_index.read())
-                .ok_or(EntityError::ComponentNotRegistered)?;
-            *component = Some(Arc::new(RwLock::new(data)));
-
-            let bit_mask = self.bit_masks.get(&type_id).unwrap();
-            self.map.write()[*self.into_index.read()] |= bit_mask;
-        } else {
-            return Err(EntityError::ComponentNotRegistered);
-        }
-
-        Ok(self)
     }
 
     pub(crate) fn get_bitmask(&self, type_id: &TypeId) -> Option<&RoaringBitmap> {
@@ -126,28 +133,6 @@ impl Entities {
     }
 }
 
-pub struct EntitiesWithIntoIndex<'a>(&'a Entities, usize);
-
-impl<'a> EntitiesWithIntoIndex<'a> {
-    pub fn with_component(&self, data: impl Any + Send + Sync) -> Result<&Self, EntityError> {
-        let type_id = data.type_id();
-        if let Some(components) = self.0.components.get(&type_id) {
-            let mut components = components.write();
-            let component = components
-                .get_mut(self.1)
-                .ok_or(EntityError::ComponentNotRegistered)?;
-            *component = Some(Arc::new(RwLock::new(data)));
-
-            let bit_mask = self.0.bit_masks.get(&type_id).unwrap();
-            self.0.map.write()[self.1] |= bit_mask;
-        } else {
-            return Err(EntityError::ComponentNotRegistered);
-        }
-
-        Ok(self)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -176,7 +161,7 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities.create_entity();
+        entities.create_entity(()).unwrap();
 
         let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
         let speed = entities.components.get(&TypeId::of::<Speed>()).unwrap();
@@ -192,12 +177,7 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap()
-            .with_component(Speed(15))
-            .unwrap();
+        entities.create_entity((Health(100), Speed(15))).unwrap();
 
         let health = &entities
             .components
@@ -223,16 +203,8 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap()
-            .with_component(Speed(15))
-            .unwrap();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
+        entities.create_entity((Health(100), Speed(15))).unwrap();
+        entities.create_entity((Health(100),)).unwrap();
 
         let entity_map = entities.map.read();
         assert!(entity_map[0].contains_range(1..2));
@@ -245,12 +217,7 @@ mod test {
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
 
-        entities
-            .create_entity()
-            .with_component(Health(10))
-            .unwrap()
-            .with_component(Speed(50))
-            .unwrap();
+        entities.create_entity((Health(10), Speed(50))).unwrap();
 
         entities.remove_component_by_entity_id::<Health>(0).unwrap();
 
@@ -262,10 +229,7 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
+        entities.create_entity((Health(100),)).unwrap();
 
         entities.add_component_by_entity_id(Speed(50), 0).unwrap();
 
@@ -276,10 +240,7 @@ mod test {
     fn delete_entity_by_id() {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
+        entities.create_entity((Health(100),)).unwrap();
         entities.delete_entity_by_id(0).unwrap();
 
         assert!(entities.map.read()[0].is_empty());
@@ -289,13 +250,10 @@ mod test {
     fn reuse_deleted_entity_columns() {
         let mut entities = Entities::default();
         entities.register_component::<Health>();
-        entities
-            .create_entity()
-            .with_component(Health(100))
-            .unwrap();
-        entities.create_entity().with_component(Health(50)).unwrap();
+        entities.create_entity((Health(100),)).unwrap();
+        entities.create_entity((Health(50),)).unwrap();
         entities.delete_entity_by_id(0).unwrap();
-        entities.create_entity().with_component(Health(25)).unwrap();
+        entities.create_entity((Health(25),)).unwrap();
 
         let health = &entities
             .components

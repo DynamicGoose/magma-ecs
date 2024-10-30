@@ -97,20 +97,10 @@ mod test {
         let mut entities = Entities::default();
         entities.register_component::<u32>();
         entities.register_component::<f32>();
-        entities
-            .create_entity()
-            .with_component(10_u32)
-            .unwrap()
-            .with_component(20.0_f32)
-            .unwrap();
-        entities.create_entity().with_component(5_u32).unwrap();
-        entities.create_entity().with_component(20.0_f32).unwrap();
-        entities
-            .create_entity()
-            .with_component(15_u32)
-            .unwrap()
-            .with_component(25.0_f32)
-            .unwrap();
+        entities.create_entity((10_u32,)).unwrap();
+        entities.create_entity((5_u32,)).unwrap();
+        entities.create_entity((20.0_f32,)).unwrap();
+        entities.create_entity((15_u32, 25.0_f32)).unwrap();
 
         Query::new(&entities)
             .with_component::<u32>()

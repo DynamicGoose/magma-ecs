@@ -23,8 +23,8 @@
 
 use std::any::Any;
 
-use entities::{query::Query, Entities, EntitiesWithIntoIndex};
-use error::ResourceError;
+use entities::{component_set::ComponentSet, query::Query, Entities};
+use error::{EntityError, ResourceError};
 use resources::Resources;
 
 /// Provides the [`Entities`] struct as well as [`query`](entities::query) and [`query_entity`](entities::query_entity) modules.
@@ -104,8 +104,8 @@ impl World {
     }
 
     /// Spawn an entity
-    pub fn create_entity(&self) -> EntitiesWithIntoIndex {
-        self.entities.create_entity()
+    pub fn create_entity(&self, components: impl ComponentSet) -> Result<(), EntityError> {
+        self.entities.create_entity(components)
     }
 
     /// Get a [`Query`] on the [`World`]'s [`Entities`].

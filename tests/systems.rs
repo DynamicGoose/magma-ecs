@@ -51,6 +51,7 @@ fn dispatcher() {
             entities[0]
                 .component_ref(|component: &u32| assert_eq!(*component, 2))
                 .unwrap();
+            println!("{:?}", entities);
             entities[3]
                 .component_ref(|component: &u32| assert_eq!(*component, 4))
                 .unwrap();
@@ -59,13 +60,13 @@ fn dispatcher() {
 
 // test systems
 fn system_1(world: &World) {
-    world.create_entity().with_component(1_u32).unwrap();
+    world.create_entity((1_u32,)).unwrap();
 }
 fn system_2(world: &World) {
-    world.create_entity().with_component(2_u32).unwrap();
+    world.create_entity((2_u32,)).unwrap();
 }
 fn system_3(world: &World) {
-    world.create_entity().with_component(3_u32).unwrap();
+    world.create_entity((3_u32,)).unwrap();
     world
         .query()
         .with_component::<u32>()
@@ -77,5 +78,5 @@ fn system_3(world: &World) {
         });
 }
 fn system_4(world: &World) {
-    world.create_entity().with_component(4_u32).unwrap();
+    world.create_entity((4_u32,)).unwrap();
 }
