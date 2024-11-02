@@ -9,6 +9,14 @@ fn create_entity() {
 }
 
 #[test]
+fn create_entity_batch() {
+    let mut world = World::new();
+    world.register_component::<u64>();
+
+    world.create_entity_batch((400_u64,), 1000).unwrap();
+}
+
+#[test]
 fn query() {
     let mut world = World::new();
     world.register_component::<u32>();

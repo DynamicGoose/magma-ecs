@@ -7,7 +7,7 @@ use std::{
 
 use crate::error::ResourceError;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Resources {
     data: RwLock<HashMap<TypeId, Arc<RwLock<dyn Any + Send + Sync>>>>,
 }

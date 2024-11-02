@@ -79,6 +79,87 @@ impl Entities {
         }
     }
 
+    pub(crate) fn create_entity_batch(
+        &self,
+        components: impl ComponentSet,
+        mut num: usize,
+    ) -> Result<(), EntityError> {
+        let mut map = self.map.write();
+        let mut result = Ok(());
+
+        let reuse: Vec<usize> = map
+            .par_iter()
+            .enumerate()
+            .filter(|(_, mask)| mask.is_empty())
+            .map(|(index, _)| index)
+            .collect();
+
+        let mut component_vecs = vec![];
+        components.for_components(|type_id, component| {
+            if let Some(component_vec) = self.components.get(&type_id) {
+                component_vecs.push((
+                    component_vec,
+                    component,
+                    *self.bit_masks.get(&type_id).unwrap(),
+                ));
+            } else {
+                result = Err(EntityError::ComponentNotRegistered);
+            }
+        });
+
+        result?;
+
+        if reuse.len() <= num {
+            num -= reuse.len();
+            reuse.par_iter().for_each(|index| {
+                component_vecs
+                    .par_iter()
+                    .for_each(|(component_vec, component, _)| {
+                        *component_vec.write().get_mut(*index).unwrap() =
+                            Some(component.to_owned());
+                    });
+            });
+            reuse.iter().for_each(|index| {
+                component_vecs.iter().for_each(|(_, _, bit_mask)| {
+                    map[*index].insert(*bit_mask);
+                });
+            });
+
+            for _ in 0..num {
+                self.components
+                    .par_iter()
+                    .for_each(|(_, components)| components.write().push(None));
+                map.push(RoaringBitmap::new());
+
+                let index = map.len() - 1;
+                component_vecs
+                    .par_iter()
+                    .for_each(|(component_vec, component, _)| {
+                        *component_vec.write().get_mut(index).unwrap() = Some(component.to_owned());
+                    });
+                component_vecs.iter().for_each(|(_, _, bit_mask)| {
+                    map[index].insert(*bit_mask);
+                });
+            }
+            Ok(())
+        } else {
+            reuse.par_iter().skip(reuse.len() - num).for_each(|index| {
+                component_vecs
+                    .par_iter()
+                    .for_each(|(component_vec, component, _)| {
+                        *component_vec.write().get_mut(*index).unwrap() =
+                            Some(component.to_owned());
+                    });
+            });
+            reuse.iter().skip(reuse.len() - num).for_each(|index| {
+                component_vecs.iter().for_each(|(_, _, bit_mask)| {
+                    map[*index].insert(*bit_mask);
+                });
+            });
+            Ok(())
+        }
+    }
+
     pub(crate) fn get_bitmask(&self, type_id: &TypeId) -> Option<&u32> {
         self.bit_masks.get(type_id)
     }
@@ -168,6 +249,27 @@ mod test {
         assert_eq!(speed.read().len(), 1);
         assert!(health.read()[0].is_some());
         assert!(speed.read()[0].is_none());
+    }
+
+    #[test]
+    fn create_entity_batch() {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+
+        entities.create_entity_batch((Health(10),), 100).unwrap();
+        {
+            let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
+            assert_eq!(health.read().len(), 100);
+        }
+        for i in 0..50 {
+            entities.delete_entity_by_id(i).unwrap();
+        }
+        entities.create_entity_batch((Health(10),), 10).unwrap();
+        assert!(entities.map.read()[39].is_empty());
+        entities.create_entity_batch((Health(10),), 60).unwrap();
+        assert!(!entities.map.read()[0].is_empty());
+        let health = entities.components.get(&TypeId::of::<Health>()).unwrap();
+        assert_eq!(health.read().len(), 120);
     }
 
     #[test]

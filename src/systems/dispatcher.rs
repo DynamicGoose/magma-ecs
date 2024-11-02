@@ -5,7 +5,7 @@ use crate::World;
 use super::{System, Systems};
 
 /// Used to dispatch [`Systems`] on a [`World`] in parallel
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Dispatcher(Vec<Vec<fn(&World)>>);
 
 impl Dispatcher {

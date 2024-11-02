@@ -5,7 +5,7 @@ use crate::World;
 /// The [`Dispatcher`] is used to dispatch [`Systems`] in parallel on a [`World`].
 pub mod dispatcher;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub(crate) struct System {
     pub run: fn(&World),
     pub name: &'static str,
@@ -19,7 +19,7 @@ impl System {
 }
 
 /// Holds systems and their dependencies
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Systems(pub(crate) Vec<System>);
 
 impl Systems {

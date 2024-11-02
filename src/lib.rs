@@ -37,7 +37,7 @@ pub mod resources;
 pub mod systems;
 
 /// The [`World`] struct holds all the data of our world.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct World {
     resources: Resources,
     entities: Entities,
@@ -118,6 +118,25 @@ impl World {
     /// ```
     pub fn create_entity(&self, components: impl ComponentSet) -> Result<(), EntityError> {
         self.entities.create_entity(components)
+    }
+
+    /// Spawn a batch of entities with the same components. This is more efficient if you have to spawn large amounts of entities.
+    /// ```
+    /// use magma_ecs::World;
+    ///
+    /// let mut world = World::new();
+    /// world.register_component::<u32>();
+    /// world.register_component::<f32>();
+    ///
+    /// // spawn 100 entities
+    /// world.create_entity_batch((30_u32, 60_f32), 100).unwrap();
+    /// ```
+    pub fn create_entity_batch(
+        &self,
+        components: impl ComponentSet,
+        num: usize,
+    ) -> Result<(), EntityError> {
+        self.entities.create_entity_batch(components, num)
     }
 
     /// Get a [`Query`] on the [`World`]'s [`Entities`].
